@@ -61,6 +61,8 @@ static void sr_load_rt_wrap(struct sr_instance* sr, char* rtable);
 
 int main(int argc, char **argv)
 {
+
+    printf("ggggggg");
     int c;
     char *host   = DEFAULT_HOST;
     char *user = 0;
