@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     int tcp_est_timeout = DEFAULT_TCP_EST_TIMEOUT;
     int tcp_trans_timeout = DEFAULT_TCP_TRANS_TIMEOUT;
 
-    printf("Using %s\n", VERSION_INFO);
+    printf("[change!] Using %s\n", VERSION_INFO);
     printf("000000000000");
 
     /*add nI:E:R for NAT */
