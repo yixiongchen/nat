@@ -131,11 +131,17 @@ int main(int argc, char **argv)
     sr_init_instance(&sr);
     /* added for NAT */
     sr.nat_on = nat_on;
+    printf("1111111111");
     sr.nat = (struct sr_nat *)malloc(sizeof(struct sr_nat));
+    printf("2222222222");
     sr_nat_init(sr.nat);
+    printf("33333333333");
     sr.nat->icmp_query_timeout = icmp_query_timeout;
+    printf("444444444444");
     sr.nat->tcp_est_timeout = tcp_est_timeout;
+    printf("555555555");
     sr.nat->tcp_trans_timeout = tcp_trans_timeout;
+    printf("666666666666");
     /* NAT */
 
     /* -- set up routing table from file -- */
