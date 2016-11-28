@@ -140,6 +140,8 @@ int main(int argc, char **argv)
     struct sr_if* ip_int = sr_get_interface(&sr, INT_INTERFACE);
     printf("[3.1] %s\n", VERSION_INFO);
     struct sr_if* ip_ext = sr_get_interface(&sr, EXT_INTERFACE);
+    assert(ip_int);
+    assert(ip_ext);
     printf("[3.2] %s\n", VERSION_INFO);
     printf("[3.3] %u\n", ip_int->ip);
     printf("[3.3] %u\n", ip_ext->ip);
