@@ -79,8 +79,7 @@ int main(int argc, char **argv)
     int tcp_trans_timeout = DEFAULT_TCP_TRANS_TIMEOUT;
 
     printf("[change!] Using %s\n", VERSION_INFO);
-    printf("[hello] Using %s\n", VERSION_INFO);
-    printf("000000000000");
+    printf("[1] %s\n", VERSION_INFO);
 
     /*add nI:E:R for NAT */
     while ((c = getopt(argc, argv, "hs:v:p:u:t:r:l:T:nI:E:R:")) != EOF)
@@ -134,17 +133,17 @@ int main(int argc, char **argv)
     sr_init_instance(&sr);
     /* added for NAT */
     sr.nat_on = nat_on;
-    printf("1111111111");
+    printf("[2] %s\n", VERSION_INFO);
     sr.nat = (struct sr_nat *)malloc(sizeof(struct sr_nat));
-    printf("2222222222");
+    printf("[3] %s\n", VERSION_INFO);
     sr_nat_init(sr.nat);
-    printf("33333333333");
+    printf("[4] %s\n", VERSION_INFO);
     sr.nat->icmp_query_timeout = icmp_query_timeout;
-    printf("444444444444");
+    printf("[5] %s\n", VERSION_INFO);
     sr.nat->tcp_est_timeout = tcp_est_timeout;
-    printf("555555555");
+    printf("[6] %s\n", VERSION_INFO);
     sr.nat->tcp_trans_timeout = tcp_trans_timeout;
-    printf("666666666666");
+    printf("[7] %s\n", VERSION_INFO);
     /* NAT */
 
     /* -- set up routing table from file -- */
