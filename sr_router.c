@@ -33,7 +33,7 @@
  * Initialize the routing subsystem
  *
  *---------------------------------------------------------------------*/
- 
+
 void sr_init(struct sr_instance* sr)
 {
     /* REQUIRES */
@@ -246,6 +246,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
                    *aux_src_int, nat_mapping_icmp);              
         	  }
 
+            printf("%u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    
       	    /* update icmp query id */
@@ -683,6 +684,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	    /* update ip header */
       	    ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
       	    ip_hdr->ip_ttl--;
+            printf("%u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    bzero(&(ip_hdr->ip_sum), 2);  
       	    uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
