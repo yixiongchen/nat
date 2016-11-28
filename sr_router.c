@@ -222,6 +222,9 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       
       /* Send packet with NAT.*/
       if (sr->nat_on == 1) {
+
+        printf("In arp queue with NAT.\n");
+
       	/* If it's an ICMP packet*/
       	if (ip_hdr->ip_p == ip_protocol_icmp) {
       	  sr_icmp_hdr_t *icmp_hdr;
@@ -246,7 +249,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
                    *aux_src_int, nat_mapping_icmp);              
         	  }
 
-            printf("%u\n", nat_mapping->ip_ext);
+            printf("EXT_IP: %u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    
       	    /* update icmp query id */
@@ -360,7 +363,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       uint16_t ip_cksum = cksum(ip_hdr, sizeof(struct sr_ip_hdr));
       ip_hdr->ip_sum = ip_cksum;
 
-      printf("Send packet:\n");
+      printf("Send packet in ARP queue where:\n");
       print_hdrs(pkt->buf, pkt->len);
       sr_send_packet(sr, pkt->buf, pkt->len, pkt->iface);
     }
@@ -684,7 +687,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	    /* update ip header */
       	    ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
       	    ip_hdr->ip_ttl--;
-            printf("%u\n", nat_mapping->ip_ext);
+            printf("EXT_IP: %u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    bzero(&(ip_hdr->ip_sum), 2);  
       	    uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
@@ -704,7 +707,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
 
       	    /* send frame to next hop */
-      	    printf("Send packet:\n");
+      	    printf("Send packet with NAT:\n");
       	    print_hdrs(sr_pkt, len);
       	    sr_send_packet(sr, sr_pkt, len, rtable->interface);
       	    free(arp_entry);
@@ -781,7 +784,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
 
       	    /* send frame to next hop */
-      	    printf("Send packet:\n");
+      	    printf("Send packet with NAT:\n");
       	    print_hdrs(sr_pkt, len);
       	    sr_send_packet(sr, sr_pkt, len, rtable->interface);
       	    free(arp_entry);
