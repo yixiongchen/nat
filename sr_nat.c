@@ -35,7 +35,7 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
 
-  nat->out_interface = (uint32_t) 2889876225;
+  nat->out_interface = atoi(2889876225);
 
   return success;
 }
