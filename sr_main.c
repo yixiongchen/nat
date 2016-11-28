@@ -136,9 +136,9 @@ int main(int argc, char **argv)
     printf("[2] %s\n", VERSION_INFO);
     sr.nat = (struct sr_nat *)malloc(sizeof(struct sr_nat));
     printf("[3] %s\n", VERSION_INFO);
-    struct sr_if* ip_int = sr_get_interface(&sr, "eth1");
+    struct sr_if* ip_int = sr_get_interface(&sr, INT_INTERFACE);
     printf("[3.1] %s\n", VERSION_INFO);
-    struct sr_if* ip_ext = sr_get_interface(&sr, "eth2");
+    struct sr_if* ip_ext = sr_get_interface(&sr, EXT_INTERFACE);
     printf("[3.2] %s\n", VERSION_INFO);
     sr_nat_init(sr.nat, ip_int->ip, ip_ext->ip);
     printf("[4] %s\n", VERSION_INFO);

@@ -33,10 +33,7 @@
  * Initialize the routing subsystem
  *
  *---------------------------------------------------------------------*/
-
-const char *INT_INTERFACE = "eth1";
-const char *EXT_INTERFACE = "eth2";
-
+ 
 void sr_init(struct sr_instance* sr)
 {
     /* REQUIRES */

@@ -30,11 +30,8 @@
 
 #define INIT_TTL 255
 #define PACKET_DUMP_SIZE 1024
-
-extern const char *INT_INTERFACE;
-extern const char *EXT_INTERFACE;
-
-
+#define INT_INTERFACE "eth1"
+#define EXT_INTERFACE "eth2"
 
 /* forward declare */
 struct sr_if;
