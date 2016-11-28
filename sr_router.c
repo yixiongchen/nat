@@ -220,6 +220,8 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       ip_hdr->ip_ttl--;
       bzero(&(ip_hdr->ip_sum), 2);
       
+      printf("\n\n\n\n\n\n\n\n\nnat_on = %d\n\n\n\n\n\n\n\n", sr->nat_on);
+
       /* Send packet with NAT.*/
       if (sr->nat_on == 1) {
 
