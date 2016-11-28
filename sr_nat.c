@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 
 
 int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
@@ -32,24 +35,17 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   printf("[1] %s\n", bug_identifier);
 
   /* initialize internal ip address and external interface ip address of NAT */
-  struct in_addr* ext_ip, *inter_ip;
-  ext_ip = (struct in_addr*)malloc(sizeof(struct in_addr));
-  printf("[2] %s\n", bug_identifier);
-  inter_ip=(struct in_addr*)malloc(sizeof(struct in_addr));
-  printf("[3] %s\n", bug_identifier);
+
   uint32_t out_ip, in_ip;
-  inet_pton(AF_INET, "172.64.3.10", &ext_ip);
+  printf("[2] %s\n", bug_identifier);
+  out_ip = inet_addr("172.64.3.10");
+  printf("[3] %s\n", bug_identifier);
+  in_ip = inet_addr("10.0.1.11");
   printf("[4] %s\n", bug_identifier);
-  out_ip = ext_ip->s_addr;
-  printf("[5] %s\n", bug_identifier);
-  inet_pton(AF_INET, "10.0.1.11", &inter_ip);
-  printf("[6] %s\n", bug_identifier);
-  in_ip = inter_ip->s_addr;
-  printf("[7] %s\n", bug_identifier);
   nat->out_interface=out_ip;
-  printf("[8] %s\n", bug_identifier);
+  printf("[5] %s\n", bug_identifier);
   nat->in_interface=in_ip;
-  printf("[9] %s\n", bug_identifier);
+  printf("[6] %s\n", bug_identifier);
   /* Initialize any variables here */
 
   return success;
