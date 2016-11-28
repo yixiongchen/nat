@@ -78,6 +78,7 @@ int main(int argc, char **argv)
     int tcp_trans_timeout = DEFAULT_TCP_TRANS_TIMEOUT;
 
     printf("Using %s\n", VERSION_INFO);
+    printf("000000000000");
 
     /*add nI:E:R for NAT */
     while ((c = getopt(argc, argv, "hs:v:p:u:t:r:l:T:nI:E:R:")) != EOF)
