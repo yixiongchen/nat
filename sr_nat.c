@@ -13,8 +13,13 @@
 
 
 int sr_nat_init(struct sr_nat *nat, uint32_t ip_int,  uint32_t ip_ext) { /* Initializes the nat */
+  
+  char bug_identifier[] = "passed";
+  printf("[1] %s\n", bug_identifier);
 
   assert(nat);
+
+  printf("[2] %s\n", bug_identifier);
 
   /* Acquire mutex lock */
   pthread_mutexattr_init(&(nat->attr));
@@ -31,15 +36,18 @@ int sr_nat_init(struct sr_nat *nat, uint32_t ip_int,  uint32_t ip_ext) { /* Init
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
 
-  char bug_identifier[] = "passed";
-  printf("[1] %s\n", bug_identifier);
+  printf("[3] %s\n", bug_identifier);
 
   /* initialize internal ip address and external interface ip address of NAT */
 
   nat->out_interface=ip_ext;
+
+  printf("[4] %s\n", bug_identifier);
+
   nat->in_interface=ip_int;
   /* Initialize any variables here */
 
+  printf("[5] %s\n", bug_identifier);
   return success;
 }
 
