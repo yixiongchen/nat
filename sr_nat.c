@@ -35,7 +35,10 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
 
-  nat->out_interface = htons(2889876225);
+  unsigned long ext_ip;
+  ext_ip = 2889876225;
+
+  nat->out_interface = htons(ext_ip);
 
   return success;
 }
