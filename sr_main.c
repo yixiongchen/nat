@@ -186,8 +186,6 @@ int main(int argc, char **argv)
 
     /* call router init (for arp subsystem etc.) */
     sr_init(&sr);
-    /* -- whizbang main loop ;-) */
-    while( sr_read_from_server(&sr) == 1);
 
     /* added for NAT */
     sr.nat_on = nat_on;
@@ -212,6 +210,9 @@ int main(int argc, char **argv)
     sr.nat->tcp_trans_timeout = tcp_trans_timeout;
     printf("[7] %s\n", VERSION_INFO);
     /* NAT */
+    
+    /* -- whizbang main loop ;-) */
+    while( sr_read_from_server(&sr) == 1);
 
     sr_destroy_instance(&sr);
 
