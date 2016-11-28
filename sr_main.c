@@ -187,6 +187,7 @@ int main(int argc, char **argv)
     sr_init(&sr);
      /* added for NAT */
     sr.nat_on = nat_on;
+    sr_print_if_list(&sr);
     printf("[2] %s\n", VERSION_INFO);
     sr.nat = (struct sr_nat *)malloc(sizeof(struct sr_nat));
     printf("[3] %s\n", VERSION_INFO);
