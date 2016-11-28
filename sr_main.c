@@ -132,28 +132,7 @@ int main(int argc, char **argv)
 
     /* -- zero out sr instance -- */
     sr_init_instance(&sr);
-    /* added for NAT */
-    sr.nat_on = nat_on;
-    printf("[2] %s\n", VERSION_INFO);
-    sr.nat = (struct sr_nat *)malloc(sizeof(struct sr_nat));
-    printf("[3] %s\n", VERSION_INFO);
-    struct sr_if* ip_int = sr_get_interface(&sr, INT_INTERFACE);
-    printf("[3.1] %s\n", VERSION_INFO);
-    struct sr_if* ip_ext = sr_get_interface(&sr, EXT_INTERFACE);
-    assert(ip_int);
-    assert(ip_ext);
-    printf("[3.2] %s\n", VERSION_INFO);
-    printf("[3.3] %u\n", ip_int->ip);
-    printf("[3.3] %u\n", ip_ext->ip);
-    sr_nat_init(sr.nat, ip_int->ip, ip_ext->ip);
-    printf("[4] %s\n", VERSION_INFO);
-    sr.nat->icmp_query_timeout = icmp_query_timeout;
-    printf("[5] %s\n", VERSION_INFO);
-    sr.nat->tcp_est_timeout = tcp_est_timeout;
-    printf("[6] %s\n", VERSION_INFO);
-    sr.nat->tcp_trans_timeout = tcp_trans_timeout;
-    printf("[7] %s\n", VERSION_INFO);
-    /* NAT */
+   
 
     /* -- set up routing table from file -- */
     if(template == NULL) {
@@ -206,6 +185,28 @@ int main(int argc, char **argv)
 
     /* call router init (for arp subsystem etc.) */
     sr_init(&sr);
+     /* added for NAT */
+    sr.nat_on = nat_on;
+    printf("[2] %s\n", VERSION_INFO);
+    sr.nat = (struct sr_nat *)malloc(sizeof(struct sr_nat));
+    printf("[3] %s\n", VERSION_INFO);
+    struct sr_if* ip_int = sr_get_interface(&sr, INT_INTERFACE);
+    printf("[3.1] %s\n", VERSION_INFO);
+    struct sr_if* ip_ext = sr_get_interface(&sr, EXT_INTERFACE);
+    assert(ip_int);
+    assert(ip_ext);
+    printf("[3.2] %s\n", VERSION_INFO);
+    printf("[3.3] %u\n", ip_int->ip);
+    printf("[3.3] %u\n", ip_ext->ip);
+    sr_nat_init(sr.nat, ip_int->ip, ip_ext->ip);
+    printf("[4] %s\n", VERSION_INFO);
+    sr.nat->icmp_query_timeout = icmp_query_timeout;
+    printf("[5] %s\n", VERSION_INFO);
+    sr.nat->tcp_est_timeout = tcp_est_timeout;
+    printf("[6] %s\n", VERSION_INFO);
+    sr.nat->tcp_trans_timeout = tcp_trans_timeout;
+    printf("[7] %s\n", VERSION_INFO);
+    /* NAT */
 
     /* -- whizbang main loop ;-) */
     while( sr_read_from_server(&sr) == 1);
