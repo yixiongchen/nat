@@ -33,6 +33,7 @@
 #include "sr_router.h"
 #include "sr_rt.h"
 #include "sr_nat.h"
+#include "sr_if.h"
 
 extern char* optarg;
 
