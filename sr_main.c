@@ -141,6 +141,8 @@ int main(int argc, char **argv)
     printf("[3.1] %s\n", VERSION_INFO);
     struct sr_if* ip_ext = sr_get_interface(&sr, EXT_INTERFACE);
     printf("[3.2] %s\n", VERSION_INFO);
+    printf("[3.3] %u\n", ip_int->ip);
+    printf("[3.3] %u\n", ip_ext->ip);
     sr_nat_init(sr.nat, ip_int->ip, ip_ext->ip);
     printf("[4] %s\n", VERSION_INFO);
     sr.nat->icmp_query_timeout = icmp_query_timeout;
