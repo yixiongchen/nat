@@ -12,7 +12,7 @@
 
 
 
-int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
+int sr_nat_init(struct sr_nat *nat, uint32_t ip_int,  uint32_t ip_ext) { /* Initializes the nat */
 
   assert(nat);
 
@@ -36,16 +36,8 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
 
   /* initialize internal ip address and external interface ip address of NAT */
 
-  uint32_t out_ip, in_ip;
-  printf("[2] %s\n", bug_identifier);
-  out_ip = inet_addr("172.64.3.10");
-  printf("[3] %s\n", bug_identifier);
-  in_ip = inet_addr("10.0.1.11");
-  printf("[4] %s\n", bug_identifier);
-  nat->out_interface=out_ip;
-  printf("[5] %s\n", bug_identifier);
-  nat->in_interface=in_ip;
-  printf("[6] %s\n", bug_identifier);
+  nat->out_interface=ip_ext;
+  nat->in_interface=ip_int;
   /* Initialize any variables here */
 
   return success;

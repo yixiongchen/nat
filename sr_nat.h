@@ -59,7 +59,7 @@ struct sr_nat {
 };
 
 
-int   sr_nat_init(struct sr_nat *nat);     /* Initializes the nat */
+int   sr_nat_init(struct sr_nat *nat, uint32_t ip_int,  uint32_t ip_ext);     /* Initializes the nat */
 int   sr_nat_destroy(struct sr_nat *nat);  /* Destroys the nat (free memory) */
 void *sr_nat_timeout(void *nat_ptr);  /* Periodic Timout */
 
