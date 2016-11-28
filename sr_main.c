@@ -183,6 +183,12 @@ int main(int argc, char **argv)
       sr_load_rt_wrap(&sr, rtable);
     }
 
+
+    /* call router init (for arp subsystem etc.) */
+    sr_init(&sr);
+    /* -- whizbang main loop ;-) */
+    while( sr_read_from_server(&sr) == 1);
+
     /* added for NAT */
     sr.nat_on = nat_on;
     sr_print_if_list(&sr);
@@ -197,7 +203,7 @@ int main(int argc, char **argv)
     printf("[3.2] %s\n", VERSION_INFO);
     printf("[3.3] %u\n", ip_int->ip);
     printf("[3.3] %u\n", ip_ext->ip);
-    sr_nat_init(sr.nat, ip_int->ip, ip_ext->ip);
+    sr_nat_init(sr.nat);
     printf("[4] %s\n", VERSION_INFO);
     sr.nat->icmp_query_timeout = icmp_query_timeout;
     printf("[5] %s\n", VERSION_INFO);
@@ -206,12 +212,6 @@ int main(int argc, char **argv)
     sr.nat->tcp_trans_timeout = tcp_trans_timeout;
     printf("[7] %s\n", VERSION_INFO);
     /* NAT */
-
-    /* call router init (for arp subsystem etc.) */
-    sr_init(&sr);
-
-    /* -- whizbang main loop ;-) */
-    while( sr_read_from_server(&sr) == 1);
 
     sr_destroy_instance(&sr);
 

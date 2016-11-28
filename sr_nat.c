@@ -11,8 +11,7 @@
 #include <netinet/in.h>
 
 
-
-int sr_nat_init(struct sr_nat *nat, uint32_t ip_int,  uint32_t ip_ext) { /* Initializes the nat */
+int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   
   char bug_identifier[] = "passed";
   printf("[1] %s\n", bug_identifier);
@@ -36,18 +35,8 @@ int sr_nat_init(struct sr_nat *nat, uint32_t ip_int,  uint32_t ip_ext) { /* Init
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
 
-  printf("[3] %s\n", bug_identifier);
+  nat->out_interface = inet_addr("172.64.3.1");
 
-  /* initialize internal ip address and external interface ip address of NAT */
-
-  nat->out_interface=ip_ext;
-
-  printf("[4] %s\n", bug_identifier);
-
-  nat->in_interface=ip_int;
-  /* Initialize any variables here */
-
-  printf("[5] %s\n", bug_identifier);
   return success;
 }
 
@@ -244,7 +233,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   /* update new mapping data */
   mapping->type = type;
   mapping->ip_int = ip_int;
-  mapping->ip_ext = nat->out_interface;
+  mapping->ip_ext = nat -> out_interface;
   mapping->aux_int = aux_int;
   mapping->aux_ext = port;
   time_t now = time(NULL);

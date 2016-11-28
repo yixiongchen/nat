@@ -48,7 +48,6 @@ struct sr_nat {
   int tcp_trans_timeout;  /* TCP Transitory Idle Timeout in seconds */
   
   uint32_t out_interface;
-  uint32_t in_interface;
 
   struct sr_nat_mapping *mappings;
   /* threading */
@@ -59,7 +58,7 @@ struct sr_nat {
 };
 
 
-int   sr_nat_init(struct sr_nat *nat, uint32_t ip_int,  uint32_t ip_ext);     /* Initializes the nat */
+int   sr_nat_init(struct sr_nat *nat);     /* Initializes the nat */
 int   sr_nat_destroy(struct sr_nat *nat);  /* Destroys the nat (free memory) */
 void *sr_nat_timeout(void *nat_ptr);  /* Periodic Timout */
 
