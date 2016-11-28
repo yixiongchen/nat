@@ -38,7 +38,7 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   uint32_t ext_ip;
   ext_ip = 2889876225;
 
-  nat->out_interface = htonl(ext_ip);
+  nat->out_interface = ntohl(ext_ip);
 
   return success;
 }
