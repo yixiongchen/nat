@@ -62,7 +62,6 @@ static void sr_load_rt_wrap(struct sr_instance* sr, char* rtable);
 int main(int argc, char **argv)
 {
 
-    printf("ggggggg");
     int c;
     char *host   = DEFAULT_HOST;
     char *user = 0;
@@ -79,7 +78,8 @@ int main(int argc, char **argv)
     int tcp_est_timeout = DEFAULT_TCP_EST_TIMEOUT;
     int tcp_trans_timeout = DEFAULT_TCP_TRANS_TIMEOUT;
 
-    /*printf("[change!] Using %s\n", VERSION_INFO);*/
+    printf("[change!] Using %s\n", VERSION_INFO);
+    printf("[hello] Using %s\n", VERSION_INFO);
     printf("000000000000");
 
     /*add nI:E:R for NAT */
