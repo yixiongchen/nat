@@ -248,9 +248,12 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
-                   *aux_src_int, nat_mapping_icmp);              
+                   *aux_src_int, nat_mapping_icmp);
+                    printf("create new port number: %d\n", nat_mapping->aux_ext);              
         	  }
-
+            
+            printf("port number: %d\n", nat_mapping->aux_ext);   
+            printf("create new port number: %u\n", nat_mapping->aux_ext);   
             printf("EXT_IP: %u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    
