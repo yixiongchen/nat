@@ -35,7 +35,7 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   pthread_create(&(nat->thread), &(nat->thread_attr), sr_nat_timeout, nat);
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
-
+  
   return success;
 }
 
@@ -234,8 +234,8 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   /* update new mapping data */
   mapping->type = type;
   mapping->ip_int = ip_int;
-
-  mapping->ip_ext = nat -> out_interface;
+  struct sr_if* interface =  nat_get_interface(nat, EXT_INTERFACE);
+  mapping->ip_ext = interface -> ip;
 
   mapping->aux_int = aux_int;
   mapping->aux_ext = port;
