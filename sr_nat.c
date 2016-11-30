@@ -234,14 +234,20 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   port = port + 1;
   /* update new mapping data */
   mapping->type = type;
+   printf("pass 1 int-port:%d\n out-port:%d\n", aux_int, port);
   mapping->ip_int = ip_int;
-  struct sr_if* interface =  nat_get_interface(nat, EXT_INTERFACE);
+   printf("pass 2 int-port:%d\n out-port:%d\n", aux_int, port);
+  struct sr_if* interface = nat_get_interface(nat, EXT_INTERFACE);
+   printf("pass 3 int-port:%d\n out-port:%d\n", aux_int, port);
   mapping->ip_ext = interface -> ip;
+   printf("pass 4 int-port:%d\n out-port:%d\n", aux_int, port);
   mapping->aux_int = aux_int;
+   printf("pass 5 int-port:%d\n out-port:%d\n", aux_int, port);
   mapping->aux_ext = port;
+   printf("pass 6 int-port:%d\n out-port:%d\n", aux_int, port);
   time_t now = time(NULL);
   mapping->last_updated = now;
-  printf("pass 1 int-port:%d\n out-port:%d\n", aux_int, port);
+  printf("pass 7 int-port:%d\n out-port:%d\n", aux_int, port);
   /* handle icmp */
   if(type == nat_mapping_icmp){
     mapping->conns = NULL; 
@@ -255,7 +261,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   mapping->next = NULL;
   /* insert new mapping into nat*/
   current = mapping;
-  printf("pass 2 int-port:%d\n out-port:%d\n", aux_int, port);
+  printf("pass 8 int-port:%d\n out-port:%d\n", aux_int, port);
   pthread_mutex_unlock(&(nat->lock));
   return mapping;
 }
