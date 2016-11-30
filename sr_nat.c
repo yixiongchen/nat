@@ -14,7 +14,7 @@
 
 int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   
-  char bug_identifier[] = "passed";
+  
   assert(nat);
   /* Acquire mutex lock */
   pthread_mutexattr_init(&(nat->attr));
