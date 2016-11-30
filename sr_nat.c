@@ -119,8 +119,10 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
   /* handle lookup here, malloc and assign to copy */
   struct sr_nat_mapping *current = nat->mappings;
   struct sr_nat_mapping *copy; 
+  printf("begin to find internal ip with external port %d\n",  aux_ext);
   while(current != NULL){
     if(current->type==type && current->aux_ext==aux_ext){
+      printf("sucessfully find the internal ip with external port %d\n", aux_ext);
       copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
       copy->type = current->type;
       copy->ip_int =current->ip_int;
@@ -246,8 +248,18 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     mapping->conns = new_conn;
   }
   mapping->next = NULL;
+
   /* insert new mapping into nat*/
-  current = mapping;
+  if(nat -> mappings = NULL){
+    nat->mappings = mapping;
+  }
+  
+  if(nat -> mappings != NULL) {
+      current = mapping;
+  }
+  
+
+
   printf("pass insrt_new_mapping out-port:%d\n\n", port);
   pthread_mutex_unlock(&(nat->lock));
   return mapping;
