@@ -240,34 +240,17 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             ip_src_int = &(ip_hdr->ip_src);
             aux_src_int = (uint16_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) 
               + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
-            
-            printf("pass icmp request\n\n");
 
             struct sr_nat_mapping *nat_mapping;
             nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
               *aux_src_int, nat_mapping_icmp);
-            printf("internal is ok\n\n");
-            /*print all mappings
-            struct sr_nat_mapping* test = sr->nat->mappings;
-            */
-            /*
-            while(test != NULL){
-               printf("internal-ip  %u\n", test->ip_int);
-               printf("internal-ip  %u\n", test->ip_ext);
-               printf("external-port  %d\n", test->aux_ext);
-               printf("internal-port %d\n", test->aux_int);      
-            }
-            */
-
 
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
-                   *aux_src_int, nat_mapping_icmp);
-               printf("a new port number is created: %d\n", nat_mapping->aux_ext);  
+                   *aux_src_int, nat_mapping_icmp);              
         	  }
-            
-            printf("a old port number is used: %d\n", nat_mapping->aux_ext);  
+
             printf("EXT_IP: %u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    
@@ -290,17 +273,6 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	    aux_ext = (uint16_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) 
       	      + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
       	    struct sr_nat_mapping *nat_mapping;
-
-            /*print all mappings
-            struct sr_nat_mapping* test = sr->nat->mappings;
-            while(test != NULL){
-               printf("internal-ip  %u\n", test->ip_int);
-               printf("internal-ip  %u\n", test->ip_ext);
-               printf("external-port  %d\n", test->aux_ext);
-               printf("internal-port %d\n", test->aux_int);      
-            }
-            */
-
       	    nat_mapping = sr_nat_lookup_external(sr->nat, *aux_ext, nat_mapping_icmp);
       	    
       	    /* If no mapping, drop the packet.*/
