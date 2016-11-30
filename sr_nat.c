@@ -9,7 +9,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "sr_if.h"
+
+
 int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   
   char bug_identifier[] = "passed";
@@ -126,9 +127,10 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
 
   /* handle lookup here, malloc and assign to copy */
   struct sr_nat_mapping *current = nat->mappings;
-  struct sr_nat_mapping *copy =(struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
+  struct sr_nat_mapping *copy; 
   while(current != NULL){
     if(current->type==type && current->aux_ext==aux_ext){
+      copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
       copy->type = current->type;
       copy->ip_int =current->ip_int;
       copy->ip_ext =current->ip_ext;
@@ -235,9 +237,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   /* update new mapping data */
   mapping->type = type;
   mapping->ip_int = ip_int;
-  struct sr_if* interface = nat_get_interface(nat, "eth2");
-  mapping->ip_ext = interface->ip;
-  free(interface);
+  mapping->ip_ext = nat -> out_interface;
   mapping->aux_int = aux_int;
   mapping->aux_ext = port;
   time_t now = time(NULL);
