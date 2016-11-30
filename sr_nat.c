@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include "sr_if.h"
 #include "sr_router.h"
+#include "sr_utils.h"
 
 int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   
@@ -260,11 +261,24 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   if(nat->mappings == NULL){
     nat->mappings = mapping;
   }
-  else
-  {
+  else{
     current->next = mapping;
   }
   printf("pass 3 %d\n", port); 
+
+
+
+  /*check nat mapping*/
+  struct sr_nat_mapping * check = nat->mappings;
+  while(check!= NULL){
+    print_addr_ip_int(check->ip_int);
+    print_addr_ip_int(check->ip_ext);
+    printf("int_port:%d outport:%d\n", check->aux_int, check->aux_ext);
+    check= check->next;   
+  }
+
+
+
 
 
   printf("pass insrt_new_mapping out-port:%d\n\n", port);

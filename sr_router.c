@@ -259,9 +259,9 @@ void sr_handle_arp_reply(struct sr_instance* sr,
                     struct sr_nat_mapping * check = sr->nat->mappings;
                     while(check!= NULL){
                       print_addr_ip_int(check->ip_int);
-                      print_addr_ip_int(nat_mapping->ip_ext);
+                      print_addr_ip_int(check->ip_ext);
                       printf("int_port:%d outport:%d\n",  
-                      nat_mapping->aux_int, nat_mapping->aux_ext);
+                      check->aux_int, check->aux_ext);
                       check= check -> next;   
                     }
                           
