@@ -245,14 +245,17 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
               *aux_src_int, nat_mapping_icmp);
             
-            /*print all mappings*/
+            /*print all mappings
             struct sr_nat_mapping* test = sr->nat->mappings;
+            */
+            /*
             while(test != NULL){
                printf("internal-ip  %u\n", test->ip_int);
                printf("internal-ip  %u\n", test->ip_ext);
                printf("external-port  %d\n", test->aux_ext);
                printf("internal-port %d\n", test->aux_int);      
             }
+            */
 
 
             /* Create new mapping if existing mapping not found.*/
@@ -286,7 +289,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	      + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
       	    struct sr_nat_mapping *nat_mapping;
 
-            /*print all mappings*/
+            /*print all mappings
             struct sr_nat_mapping* test = sr->nat->mappings;
             while(test != NULL){
                printf("internal-ip  %u\n", test->ip_int);
@@ -294,6 +297,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
                printf("external-port  %d\n", test->aux_ext);
                printf("internal-port %d\n", test->aux_int);      
             }
+            */
 
       	    nat_mapping = sr_nat_lookup_external(sr->nat, *aux_ext, nat_mapping_icmp);
       	    
