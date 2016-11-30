@@ -241,7 +241,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   mapping->aux_ext = port;
   time_t now = time(NULL);
   mapping->last_updated = now;
-  printf("pass 1\n");
+  printf("pass 1 int-port:%d\n out-port:%d\n", aux_int, port);
   /* handle icmp */
   if(type == nat_mapping_icmp){
     mapping->conns = NULL; 
@@ -255,7 +255,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   mapping->next = NULL;
   /* insert new mapping into nat*/
   current = mapping;
-  printf("pass 3 \n");
+  printf("pass 2 int-port:%d\n out-port:%d\n", aux_int, port);
   pthread_mutex_unlock(&(nat->lock));
   return mapping;
 }
