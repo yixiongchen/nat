@@ -220,14 +220,21 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
 
   /*loop to the end of list and get the largest external port number */
   int port = 1024;
-  while(current != NULL){
-    if(port < current->aux_ext){
-      port = current->aux_ext;
+
+  if(nat->mappings == NULL){
+    port = 1024;
+  }
+  else{
+    while(current -> next != NULL){
+      if(port < current->aux_ext){
+        port = current->aux_ext;
+      }
+      current = current->next;
     }
-    current = current->next;
+    port = port + 1;
   }
   /* create a new external port number */
-  port = port + 1;
+  
   /* update new mapping data */
   mapping->type = type;
   mapping->ip_int = ip_int;
@@ -236,7 +243,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   mapping->aux_ext = port;
   time_t now = time(NULL);
   mapping->last_updated = now;
-
+  printf("pass 1 %d\n", port);  
   /* handle icmp */
   if(type == nat_mapping_icmp){
     mapping->conns = NULL; 
@@ -248,16 +255,16 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     mapping->conns = new_conn;
   }
   mapping->next = NULL;
-
+   printf("pass 2 %d\n", port);  
   /* insert new mapping into nat*/
-  if(nat -> mappings == NULL){
+  if(nat->mappings == NULL){
     nat->mappings = mapping;
   }
+  printf("pass 3 %d\n", port); 
   
-  if(nat -> mappings != NULL) {
-      current = mapping;
+  if(nat->mappings != NULL) {
+      current->next = mapping;
   }
-  
 
 
   printf("pass insrt_new_mapping out-port:%d\n\n", port);
