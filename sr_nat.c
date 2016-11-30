@@ -232,6 +232,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     current = current->next;
   }
   /* create a new external port number */
+  printf("Insert new mapping int-port:%d\n out-port:%d\n", aux_int, port);
   port = port + 1;
   /* update new mapping data */
   mapping->type = type;
