@@ -165,7 +165,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
 
   pthread_mutex_lock(&(nat->lock));
 
-  printf("begin. \n");
+  printf("begin %d\n",aux_int);
   /* handle lookup here, malloc and assign to copy. */
   struct sr_nat_mapping *current = nat->mappings;
 
