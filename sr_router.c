@@ -250,11 +250,14 @@ void sr_handle_arp_reply(struct sr_instance* sr,
               struct sr_if* external_interface = sr_get_interface(sr, EXT_INTERFACE);
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
                    *aux_src_int, nat_mapping_icmp, external_interface->ip);
-                    printf("create new port number: %d\n", nat_mapping->aux_ext);              
+                   printf("\n\ncreate new port number for imcp request-- int_port:  %d outport:
+                      %d\n",  nat_mapping->aux_int, nat_mapping->aux_ext);   
+                    print_addr_ip_int(nat_mapping->ip_int);
+                    print_addr_ip_int(nat_mapping->ip_ext);
+                    printf("\n\nsecond:  %d seoncd:
+                      %d\n\n\n",  nat_mapping->aux_int, nat_mapping->aux_ext); 
+                          
         	  }
-            printf("create new port number: %d\n", nat_mapping->aux_ext);   
-            printf("create new port number: %u\n", nat_mapping->aux_ext);   
-            printf("EXT_IP: %u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    
       	    /* update icmp query id */
