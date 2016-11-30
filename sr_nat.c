@@ -168,8 +168,11 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
   /* handle lookup here, malloc and assign to copy. */
   struct sr_nat_mapping *current = nat->mappings;
   struct sr_nat_mapping *copy = NULL;
+
   while(current != NULL){
+     printf("loop in. \n");
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
+      printf("already exist in. \n");
       copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
       bzero(copy, sizeof(struct sr_nat_mapping));
       copy->type = current->type;
@@ -256,7 +259,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     mapping->conns = new_conn;
   }
   mapping->next = NULL;
-   printf("pass 2 %d\n", port);  
+
   /* insert new mapping into nat*/
   if(nat->mappings == NULL){
     nat->mappings = mapping;
@@ -264,7 +267,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   else{
     current->next = mapping;
   }
-  printf("pass 3 %d\n", port); 
+
 
 
 
