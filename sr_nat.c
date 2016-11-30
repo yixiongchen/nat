@@ -171,6 +171,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
   /* handle lookup here, malloc and assign to copy. */
   struct sr_nat_mapping *current = nat->mappings;
   struct sr_nat_mapping *copy = NULL;
+  /*
   while(current != NULL){
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
       copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
@@ -181,13 +182,13 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
       copy->aux_ext =current->aux_ext;
       copy->last_updated = current->last_updated;
       struct sr_nat_connection *connection;
-      /*copy tcp connections*/
+      /*copy tcp connections
       if(current->conns != NULL) {
         connection = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
         memcpy(connection, current->conns, sizeof(struct sr_nat_connection));
         struct sr_nat_connection *next_conn = current->conns->next;
         struct sr_nat_connection *result = connection;
-        /*loop over each tcp connection*/
+        /*loop over each tcp connection
         while(next_conn != NULL){
           struct sr_nat_connection *nested = (struct sr_nat_connection*) malloc(sizeof(struct sr_nat_connection));
           memcpy(nested, next_conn, sizeof(struct sr_nat_connection));
@@ -203,6 +204,8 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
 
     current = current->next;
   }
+  */
+
   pthread_mutex_unlock(&(nat->lock));
   return copy;
 }
