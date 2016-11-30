@@ -249,9 +249,10 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             if (!nat_mapping) {
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
                    *aux_src_int, nat_mapping_icmp);
-
+               printf("a new port number is created: %d\n", nat_mapping->aux_ext);  
         	  }
-            printf("port number is: %d\n", nat_mapping->aux_ext);  
+            
+            printf("a old port number is used: %d\n", nat_mapping->aux_ext);  
             printf("EXT_IP: %u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    
