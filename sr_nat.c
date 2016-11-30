@@ -35,6 +35,11 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   pthread_create(&(nat->thread), &(nat->thread_attr), sr_nat_timeout, nat);
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
+
+  nat->p_fin = 0;
+  int nat->tcp_syn = 0;
+  int nat->tcp_ack = 0;  
+  uint32_t nat->ip_ext = 0;
   
   return success;
 }
