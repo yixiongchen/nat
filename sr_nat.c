@@ -237,15 +237,16 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   mapping->ip_int = ip_int;
   struct sr_if* interface =  nat_get_interface(nat, EXT_INTERFACE);
   mapping->ip_ext = interface -> ip;
-
   mapping->aux_int = aux_int;
   mapping->aux_ext = port;
   time_t now = time(NULL);
   mapping->last_updated = now;
+  printf("pass 1");
   /* handle icmp */
   if(type == nat_mapping_icmp){
     mapping->conns = NULL; 
   }
+  printf("pass 2");
   /* handle tcp */
   else if(type == nat_mapping_tcp){
     struct sr_nat_connection* new_conn = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
@@ -255,6 +256,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   mapping->next = NULL;
   /* insert new mapping into nat*/
   current = mapping;
+  printf("pass 3");
   pthread_mutex_unlock(&(nat->lock));
   return mapping;
 }
