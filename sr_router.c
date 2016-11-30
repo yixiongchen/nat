@@ -245,6 +245,15 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             printf("next is mapping for icmp = 8.\n");
 
             struct sr_nat_mapping *nat_mapping;
+
+            printf("src_ip %u\n", *ip_src_int );
+            printf("port_int %d\n",*aux_src_int);
+            
+            if(sr-> nat == NULL) {
+
+            printf("sr_nat is null %u\n", *ip_src_int );
+            }
+
             nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
               *aux_src_int, nat_mapping_icmp);
 
