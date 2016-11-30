@@ -42,12 +42,14 @@ struct sr_nat_mapping {
 
 struct sr_nat {
   /* add any fields here */
-  struct sr_if* if_list; /* list of interfaces */
+  /* struct sr_if* if_list; */ /* list of interfaces */
   int icmp_query_timeout;  /* ICMP query timeout interval in seconds */
   int tcp_est_timeout;  /* TCP Established Idle Timeout in seconds */
   int tcp_trans_timeout;  /* TCP Transitory Idle Timeout in seconds */
-  
-  uint32_t out_interface;
+  int tcp_fin;
+  int tcp_syn;
+  int tcp_ack;  
+  uint32_t ip_ext;
 
   struct sr_nat_mapping *mappings;
   /* threading */
