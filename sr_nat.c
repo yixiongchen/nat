@@ -9,7 +9,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
+#include "sr_if.h"
+#include "sr_router.h"
 
 int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   
@@ -34,11 +35,6 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   pthread_create(&(nat->thread), &(nat->thread_attr), sr_nat_timeout, nat);
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
-
-  uint32_t ext_ip;
-  ext_ip = 2889876225;
-
-  nat->out_interface = ntohl(ext_ip);
 
   return success;
 }
@@ -237,7 +233,9 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   /* update new mapping data */
   mapping->type = type;
   mapping->ip_int = ip_int;
+
   mapping->ip_ext = nat -> out_interface;
+
   mapping->aux_int = aux_int;
   mapping->aux_ext = port;
   time_t now = time(NULL);
