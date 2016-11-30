@@ -236,7 +236,6 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   mapping->ip_int = ip_int;
   struct sr_if* interface = nat_get_interface(nat, "eth2");
   mapping->ip_ext = interface->ip;
-  free(interface);
   mapping->aux_int = aux_int;
   mapping->aux_ext = port;
   time_t now = time(NULL);
