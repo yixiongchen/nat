@@ -196,7 +196,6 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
           next_conn = next_conn->next;
         } 
       }
-
       copy->conns = connection;
       copy->next = NULL;
       break; 

@@ -240,11 +240,13 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             ip_src_int = &(ip_hdr->ip_src);
             aux_src_int = (uint16_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) 
               + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
+            
+            printf("pass icmp request \n\n"):
 
             struct sr_nat_mapping *nat_mapping;
             nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
               *aux_src_int, nat_mapping_icmp);
-            
+            printf("internal is ok \n\n"):
             /*print all mappings
             struct sr_nat_mapping* test = sr->nat->mappings;
             */
