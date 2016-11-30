@@ -232,7 +232,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	  sr_icmp_hdr_t *icmp_hdr;
       	  icmp_hdr = (sr_icmp_hdr_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr)
       	    + sizeof(struct sr_ip_hdr));
-      	  
+      	  printf("pass icmp.\n");
       	  /* If it's an ICMP echo request*/
       	  if (icmp_hdr->icmp_type == 8) {
             uint16_t *aux_src_int;
@@ -244,9 +244,10 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             struct sr_nat_mapping *nat_mapping;
             nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
               *aux_src_int, nat_mapping_icmp);
-
+             printf("pass icmp request.\n");
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
+              printf("pass not mapping.\n");
               struct sr_if* external_interface = sr_get_interface(sr, EXT_INTERFACE);
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
                    *aux_src_int, nat_mapping_icmp, external_interface->ip);
