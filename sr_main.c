@@ -191,7 +191,7 @@ int main(int argc, char **argv)
     sr.nat_on = nat_on;
     sr.nat = (struct sr_nat *)malloc(sizeof(struct sr_nat));
     sr_nat_init(sr.nat);
-    sr.nat->if_list = sr.if_list; 
+    sr.nat->if_list = sr.if_list;
     sr.nat->icmp_query_timeout = icmp_query_timeout;
     sr.nat->tcp_est_timeout = tcp_est_timeout;
     sr.nat->tcp_trans_timeout = tcp_trans_timeout;
