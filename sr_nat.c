@@ -213,7 +213,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
    Actually returns a copy to the new mapping, for thread safety.
  */
 struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type ) {
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t ext_ip ) {
   
   pthread_mutex_lock(&(nat->lock));
 
@@ -237,9 +237,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
    printf("pass 1 int-port:%d\n out-port:%d\n", aux_int, port);
   mapping->ip_int = ip_int;
    printf("pass 2 int-port:%d\n out-port:%d\n", aux_int, port);
-  struct sr_if* interface = nat_get_interface(nat, "eth2");
-   printf("pass 3 int-port:%d\n out-port:%d\n", aux_int, port);
-  mapping->ip_ext = interface->ip;
+  mapping->ip_ext = ext_ip;
    printf("pass 4 int-port:%d\n out-port:%d\n", aux_int, port);
   mapping->aux_int = aux_int;
    printf("pass 5 int-port:%d\n out-port:%d\n", aux_int, port);

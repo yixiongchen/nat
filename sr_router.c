@@ -247,8 +247,9 @@ void sr_handle_arp_reply(struct sr_instance* sr,
 
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
+              struct sr_if* external_interface = sr_get_interface(sr, EXT_INTERFACE);
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
-                   *aux_src_int, nat_mapping_icmp);
+                   *aux_src_int, nat_mapping_icmp, external_interface->ip);
                     printf("create new port number: %d\n", nat_mapping->aux_ext);              
         	  }
             printf("create new port number: %d\n", nat_mapping->aux_ext);   
@@ -321,8 +322,9 @@ void sr_handle_arp_reply(struct sr_instance* sr,
 
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
+              struct sr_if* external_interface = sr_get_interface(sr, EXT_INTERFACE);
               nat_mapping = sr_nat_insert_mapping(sr->nat, ip_src_int, 
-                   aux_src_int, nat_mapping_tcp);
+                   aux_src_int, nat_mapping_tcp, external_interface->ip);
             }
 
             /* translate ip source address */
@@ -666,8 +668,9 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
 	  
       	  /* Create new mapping if existing mapping not found.*/
       	  if (!nat_mapping) {
+              struct sr_if* external_interface = sr_get_interface(sr, EXT_INTERFACE);
       	    nat_mapping = sr_nat_insert_mapping(sr->nat, original_ip_src, 
-      					*original_icmp_id, nat_mapping_icmp);
+      					*original_icmp_id, nat_mapping_icmp, external_interface->ip);
       	  }
       	  
       	  struct sr_if* o_iface = sr_get_interface(sr, EXT_INTERFACE);
