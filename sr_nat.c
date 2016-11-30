@@ -124,7 +124,7 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
 
   /* handle lookup here, malloc and assign to copy */
   struct sr_nat_mapping *current = nat->mappings;
-  struct sr_nat_mapping *copy; 
+  struct sr_nat_mapping *copy = NULL; 
   while(current != NULL){
     if(current->type==type && current->aux_ext==aux_ext){
       copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
@@ -170,9 +170,10 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
 
   /* handle lookup here, malloc and assign to copy. */
   struct sr_nat_mapping *current = nat->mappings;
-  struct sr_nat_mapping *copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
+  struct sr_nat_mapping *copy = NULL;
   while(current != NULL){
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
+      copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
       copy->type = current->type;
       copy->ip_int =current->ip_int;
       copy->ip_ext =current->ip_ext;
