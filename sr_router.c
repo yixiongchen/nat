@@ -248,14 +248,13 @@ void sr_handle_arp_reply(struct sr_instance* sr,
 
             printf("src_ip %u\n", *ip_src_int );
             printf("port_int %d\n",*aux_src_int);
-            
+
             if(sr-> nat == NULL) {
 
             printf("sr_nat is null %u\n", *ip_src_int );
             }
 
-            nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
-              *aux_src_int, nat_mapping_icmp);
+            nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, *aux_src_int, nat_mapping_icmp);
 
              printf("pass look up.\n");
             /* Create new mapping if existing mapping not found.*/
@@ -270,14 +269,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
                     print_addr_ip_int(nat_mapping->ip_ext);
                     printf("second:%d seoncd:%d\n", nat_mapping->aux_int, nat_mapping->aux_ext); 
 
-                    struct sr_nat_mapping * check = sr->nat->mappings;
-                    while(check!= NULL){
-                      print_addr_ip_int(check->ip_int);
-                      print_addr_ip_int(check->ip_ext);
-                      printf("int_port:%d outport:%d\n",  
-                      check->aux_int, check->aux_ext);
-                      check= check -> next;   
-                    }
+              
                           
         	  }
 
