@@ -237,9 +237,9 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
    printf("pass 1 int-port:%d\n out-port:%d\n", aux_int, port);
   mapping->ip_int = ip_int;
    printf("pass 2 int-port:%d\n out-port:%d\n", aux_int, port);
-  struct sr_if* interface = nat_get_interface(nat, EXT_INTERFACE);
+  struct sr_if* interface = nat_get_interface(nat, "eth2");
    printf("pass 3 int-port:%d\n out-port:%d\n", aux_int, port);
-  mapping->ip_ext = interface -> ip;
+  mapping->ip_ext = interface->ip;
    printf("pass 4 int-port:%d\n out-port:%d\n", aux_int, port);
   mapping->aux_int = aux_int;
    printf("pass 5 int-port:%d\n out-port:%d\n", aux_int, port);
