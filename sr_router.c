@@ -805,10 +805,168 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
     
     /* If it's a TCP packet*/
     else if (ip_hdr->ip_p == ip_protocol_tcp) {
-      
+
+      sr_tcp_hdr_t *tcp_hdr;
+      tcp_hdr = (sr_tcp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + 
+        sizeof(struct sr_ip_hdr));
+      uint16_t original_tcp_src_port = tcp_hdr->src_port;
+      uint16_t original_tcp_dst_port = tcp_hdr->dst_port;
+
+      unsigned int flag = tcp_hdr->flag;
+      int fin = flag & 1;
+      int syn = flag & (1<<1);
+      int ack = flag & (1<<4);
+
+      /* if the tcp is from internal to external */
+      if (strcmp(interface, INT_INTERFACE) == 0) {  
+
+        /* lookup the longest prefix match */
+        struct sr_rt *rtable = sr_longest_prefix_match(sr, original_ip_dst);
+
+        /* if no match, icmp net unreachable */
+        if (! rtable->gw.s_addr) {
+          sr_icmp_dest_unreachable(sr, packet, len, interface, 3, 0);
+          return;
+        }
+
+        /* if match */          
+        /* Look for nat mapping for corresponding src_ip and src_aux. */
+        struct sr_nat_mapping *nat_mapping;
+        nat_mapping = sr_nat_lookup_internal(sr->nat, original_ip_src, 
+          original_tcp_src_port, nat_mapping_tcp);
+  
+        /* Create new mapping if existing mapping not found.*/
+        if (!nat_mapping) {
+          nat_mapping = sr_nat_insert_mapping(sr->nat, original_ip_src, 
+            original_tcp_src_port, nat_mapping_tcp);
+        }
+        
+        struct sr_if* o_iface = sr_get_interface(sr, EXT_INTERFACE);
+        assert(o_iface);
+
+        /* make a copy of the packet */
+        uint8_t *sr_pkt = (uint8_t *)malloc(len);
+        memcpy(sr_pkt, packet, len);
+
+        /* check arp cache for next hop mac */
+        struct sr_arpentry *arp_entry; 
+        arp_entry = sr_arpcache_lookup(&(sr->cache), rtable->gw.s_addr);
+
+        /*arp cache hit */
+        if (arp_entry) {
+          /* update ethernet header */
+          ethernet_hdr = (sr_ethernet_hdr_t *)sr_pkt;
+          memcpy(ethernet_hdr->ether_dhost, arp_entry->mac, ETHER_ADDR_LEN); 
+          memcpy(ethernet_hdr->ether_shost, o_iface->addr, ETHER_ADDR_LEN); 
+
+          /* update ip header */
+          ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
+          ip_hdr->ip_ttl--;
+          ip_hdr->ip_src = nat_mapping->ip_ext;
+          bzero(&(ip_hdr->ip_sum), 2);  
+          uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
+          ip_hdr->ip_sum = ip_cksum;
+
+          /* update tcp header */          
+          tcp_hdr->src_port = nat_mapping->aux_ext;
+          /* recalculate tcp chechsum */
+          bzero(&(tcp_hdr->tcp_sum), 2);
+          uint16_t tcp_cksum = cksum(tcp_hdr, len - 
+            sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+          tcp_hdr->tcp_sum = tcp_cksum;          
+          
+          /* send frame to next hop */
+          printf("Send packet:\n");
+          print_hdrs(sr_pkt, len);
+          sr_send_packet(sr, sr_pkt, len, EXT_INTERFACE);
+          free(arp_entry);
+        }
+        /* arp miss */
+        else {
+          sr_arpcache_queuereq(&(sr->cache), rtable->gw.s_addr, packet, len, 
+             EXT_INTERFACE);
+        }
+        free(sr_pkt);
+        free(rtable); 
+        free(nat_mapping);          
+      }
+
+      /* if the tcp is from external to internal */
+      if (strcmp(interface, EXT_INTERFACE) == 0) {
+
+        /* Look for nat mapping for corresponding dst_ip and dst_aux. */
+        struct sr_nat_mapping *nat_mapping;
+        nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, nat_mapping_icmp);
+        
+        /* if no mapping, drop the packet */
+        if (!nat_mapping) {
+          fprintf(stderr , "** Error: No mapping found when forwarding tcp packet.");
+          return;
+        }
+
+        /* lookup the longest prefix match */
+        struct sr_rt *rtable = sr_longest_prefix_match(sr, nat_mapping->ip_int);
+
+        /* if no match, icmp net unreachable */
+        if (! rtable->gw.s_addr) {
+          sr_icmp_dest_unreachable(sr, packet, len, interface, 3, 0);
+          return;
+        }
+
+        /* match */        
+        struct sr_if* o_iface = sr_get_interface(sr, INT_INTERFACE);
+        assert(o_iface);
+
+        /* make a copy of the packet */
+        uint8_t *sr_pkt = (uint8_t *)malloc(len);
+        memcpy(sr_pkt, packet, len);
+
+        /* check arp cache for next hop mac */
+        struct sr_arpentry *arp_entry; 
+        arp_entry = sr_arpcache_lookup(&(sr->cache), rtable->gw.s_addr);
+
+        /*arp cache hit */
+        if (arp_entry) {
+          /* update ethernet header */
+          ethernet_hdr = (sr_ethernet_hdr_t *)sr_pkt;
+          memcpy(ethernet_hdr->ether_dhost, arp_entry->mac, ETHER_ADDR_LEN); 
+          memcpy(ethernet_hdr->ether_shost, o_iface->addr, ETHER_ADDR_LEN); 
+        
+          /* update ip header */
+          ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
+          ip_hdr->ip_ttl--;
+          ip_hdr->ip_dst = nat_mapping->ip_int;
+          bzero(&(ip_hdr->ip_sum), 2);  
+          uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
+          ip_hdr->ip_sum = ip_cksum;
+
+          /* update tcp header */          
+          tcp_hdr->dst_port = nat_mapping->aux_int;
+          /* recalculate tcp chechsum */
+          bzero(&(tcp_hdr->tcp_sum), 2);
+          uint16_t tcp_cksum = cksum(tcp_hdr, len - 
+            sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+          tcp_hdr->tcp_sum = tcp_cksum;          
+
+          /* send frame to next hop */
+          printf("Send packet:\n");
+          print_hdrs(sr_pkt, len);
+          sr_send_packet(sr, sr_pkt, len, INT_INTERFACE);
+          free(arp_entry);
+        }  
+        /* arp miss */
+        else {
+          sr_arpcache_queuereq(&(sr->cache), rtable->gw.s_addr, packet, len, 
+             INT_INTERFACE);
+        }
+        free(sr_pkt);
+        free(rtable); 
+        free(nat_mapping); 
+
+      }
     }
   }
-  
+ 
   /* Routing without NAT. */
   else{
     uint32_t ip_dest;
