@@ -162,31 +162,26 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
    You must free the returned structure if it is not NULL. */
 struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
   uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type ) {
-
   pthread_mutex_lock(&(nat->lock));
-
   printf("begin %d\n",aux_int);
   /* handle lookup here, malloc and assign to copy. */
   struct sr_nat_mapping *current = nat->mappings;
-
   printf("one. \n");
   struct sr_nat_mapping *copy = NULL;
   printf("two. \n");
-  return NULL;
-
   while(current != NULL){
-     printf("loop in. \n");
+     printf("nat_mapping is not null. \n");
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
       printf("already exist in. \n");
       copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
       bzero(copy, sizeof(struct sr_nat_mapping));
       copy->type = current->type;
-      copy->ip_int =current->ip_int;
-      copy->ip_ext =current->ip_ext;
-      copy->aux_int = current->aux_int;
-      copy->aux_ext =current->aux_ext;
+      copy->ip_int=current->ip_int;
+      copy->ip_ext=current->ip_ext;
+      copy->aux_int=current->aux_int;
+      copy->aux_ext=current->aux_ext;
       copy->last_updated = current->last_updated;
-      struct sr_nat_connection *connection;
+      struct sr_nat_connection *connection = NULL;
       /*copy tcp connections*/
       if(current->conns != NULL) {
         connection = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
@@ -273,7 +268,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     current->next = mapping;
   }
 
-  
+
 
 
 
