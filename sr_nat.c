@@ -273,10 +273,12 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     current->next = mapping;
   }
 
+  
 
 
 
-  /*check nat mapping*/
+
+  /*check nat mapping
   struct sr_nat_mapping * check = nat->mappings;
   while(check!= NULL){
     print_addr_ip_int(check->ip_int);
@@ -284,6 +286,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     printf("int_port:%d outport:%d\n", check->aux_int, check->aux_ext);
     check= check->next;   
   }
+  */
 
 
 
