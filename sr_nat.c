@@ -260,11 +260,11 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   if(nat->mappings == NULL){
     nat->mappings = mapping;
   }
-  printf("pass 3 %d\n", port); 
-  
-  if(nat->mappings != NULL) {
-      current->next = mapping;
+  else
+  {
+    current->next = mapping;
   }
+  printf("pass 3 %d\n", port); 
 
 
   printf("pass insrt_new_mapping out-port:%d\n\n", port);
