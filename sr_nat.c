@@ -250,7 +250,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   mapping->next = NULL;
 
   /* insert new mapping into nat*/
-  if(nat -> mappings = NULL){
+  if(nat -> mappings == NULL){
     nat->mappings = mapping;
   }
   
