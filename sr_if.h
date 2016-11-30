@@ -25,6 +25,7 @@
 #endif
 
 #include "sr_protocol.h"
+#include "sr_nat.h"
 
 struct sr_instance;
 
