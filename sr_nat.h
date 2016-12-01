@@ -24,6 +24,9 @@ struct sr_nat_connection {
   Boolean status; /* it is closed or open*/
   int sequence; /*sequences number of TCP packets*/
   uint32_t ack; /* acknowledgment */
+  int tcp_fin;
+  int tcp_syn;
+  int tcp_ack; 
   struct sr_nat_connection *next;
 };
 
@@ -45,10 +48,7 @@ struct sr_nat {
   int icmp_query_timeout;  /* ICMP query timeout interval in seconds */
   int tcp_est_timeout;  /* TCP Established Idle Timeout in seconds */
   int tcp_trans_timeout;  /* TCP Transitory Idle Timeout in seconds */
-  int tcp_fin;
-  int tcp_syn;
-  int tcp_ack;  
-  uint32_t ip_ext;  
+  uint32_t ip_ext;
 
   struct sr_nat_mapping *mappings;
   /* threading */
@@ -67,17 +67,18 @@ void *sr_nat_timeout(void *nat_ptr);  /* Periodic Timout */
 /* Get the mapping associated with given external port.
    You must free the returned structure if it is not NULL. */
 struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
-    uint16_t aux_ext, sr_nat_mapping_type type );
+    uint16_t aux_ext, sr_nat_mapping_type type, uint32_t src_ip, uint16_t src_port, int ack, int syn, int fin);
 
 /* Get the mapping associated with given internal (ip, port) pair.
    You must free the returned structure if it is not NULL. */
 struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type );
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t dst_ip, uint16_t dst_port, int ack, int syn, int fin);
 
 /* Insert a new mapping into the nat's mapping table.
    You must free the returned structure if it is not NULL. */
+/* sendsyn = 1 if tcp packet from internal to external, 0 for all other cases */
 struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t ext_ip);
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t outhost_ip, uint16_t outhost_port, int sendsyn);
 
 /* Free the returned Mapping 
 */

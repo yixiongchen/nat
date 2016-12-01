@@ -86,6 +86,12 @@ void sr_handlepacket(struct sr_instance* sr,
 
   /* fill in code here */
 
+  /* add nat external ip address */
+  struct sr_if *nat_ext_iface; /* nat's outgoing interface */
+  nat_ext_iface = sr_get_interface(sr, EXT_INTERFACE);
+  assert(nat_ext_iface);
+  sr->nat->ip_ext = nat_ext_iface->ip;
+
   sr_ethernet_hdr_t *ethernet_hdr;
 
   if ( len < sizeof(struct sr_ethernet_hdr) ) {
@@ -220,48 +226,42 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       ip_hdr->ip_ttl--;
       bzero(&(ip_hdr->ip_sum), 2);
       
-      printf("\n\n\n\n\n\n\n\n\nnat_on = %d\n\n\n\n\n\n\n\n", sr->nat_on);
+      printf("\n\n\n\n\n\nat_on = %d\n\n\n\n\n\n", sr->nat_on);
 
       /* Send packet with NAT.*/
       if (sr->nat_on == 1) {
-
-        printf("In arp queue with NAT.\n");
 
       	/* If it's an ICMP packet*/
       	if (ip_hdr->ip_p == ip_protocol_icmp) {
       	  sr_icmp_hdr_t *icmp_hdr;
       	  icmp_hdr = (sr_icmp_hdr_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr)
       	    + sizeof(struct sr_ip_hdr));
-      	  printf("pass icmp.\n");
+
       	  /* If it's an ICMP echo request*/
       	  if (icmp_hdr->icmp_type == 8) {
-            printf("pass icmp = 8.\n");
+            /* printf("pass icmp = 8.\n"); */
             uint16_t *aux_src_int;
             uint32_t *ip_src_int;
             ip_src_int = &(ip_hdr->ip_src);
             aux_src_int = (uint16_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) 
               + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
 
-            printf("next is mapping for icmp = 8.\n");
+            /* printf("next is mapping for icmp = 8.\n"); */
 
             struct sr_nat_mapping *nat_mapping;
 
-            printf("src_ip %u\n", *ip_src_int );
-            printf("port_int %d\n",*aux_src_int);
+            /* printf("src_ip %u\n", *ip_src_int ); */
+            /* printf("port_int %d\n",*aux_src_int); */
 
-            if(sr->nat == NULL) {
+            nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
+              *aux_src_int, nat_mapping_icmp, 0, 0, 0, 0, 0);
 
-            printf("sr_nat is null %u\n", *ip_src_int );
-            }
-
-            nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, *aux_src_int, nat_mapping_icmp);
-
-             printf("pass look up.\n");
+            /* printf("pass look up.\n"); */
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
 
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
-                   *aux_src_int, nat_mapping_icmp);              
+                *aux_src_int, nat_mapping_icmp, 0, 0, 0);
         	  }
 
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
@@ -285,8 +285,8 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	    aux_ext = (uint16_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) 
       	      + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
       	    struct sr_nat_mapping *nat_mapping;
-      	    nat_mapping = sr_nat_lookup_external(sr->nat, *aux_ext, nat_mapping_icmp);
-      	    
+      	    nat_mapping = sr_nat_lookup_external(sr->nat, *aux_ext, nat_mapping_icmp, 0, 0, 0, 0, 0);
+
       	    /* If no mapping, drop the packet.*/
       	    if (!nat_mapping) {
       	      fprintf(stderr , "** Error: No mapping found when forwarding icmp reply.");
@@ -310,7 +310,6 @@ void sr_handle_arp_reply(struct sr_instance* sr,
           }
 	      }
       
-
         /* If it's an TCP packet*/
         if (ip_hdr->ip_p == ip_protocol_tcp) {
 
@@ -319,31 +318,31 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             sizeof(struct sr_ip_hdr));
 
           unsigned int flag = tcp_hdr->flag;
-          sr->nat.tcp_fin = flag & 1;
-          sr->nat.tcp_syn = flag & (1<<1);
-          sr->nat.tcp_ack = flag & (1<<4);
+          int ack = flag & (1<<4);
+          int syn = flag & (1<<1);          
+          int fin = flag & 1;          
 
           /* if the tcp is from internal to external */
           if (strcmp(pkt->iface, EXT_INTERFACE) == 0) {
             /* get source ip and port number */
             uint32_t ip_src_int = ip_hdr->ip_src;
-            uint16_t aux_src_int = tcp_hdr->src_port;
+            uint16_t aux_src_int = tcp_hdr->port_src;
 
             /* find nat mapping */
             struct sr_nat_mapping *nat_mapping;
             nat_mapping = sr_nat_lookup_internal(sr->nat, ip_src_int, 
-              aux_src_int, nat_mapping_icmp);
+              aux_src_int, nat_mapping_icmp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin);
 
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
               nat_mapping = sr_nat_insert_mapping(sr->nat, ip_src_int, 
-                   aux_src_int, nat_mapping_tcp);
+                   aux_src_int, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, 1);
             }
 
             /* translate ip source address */
             ip_hdr->ip_src = nat_mapping->ip_ext;            
             /* translate tcp source port number */
-            tcp_hdr->src_port = nat_mapping->aux_ext;
+            tcp_hdr->port_src = nat_mapping->aux_ext;
             /* recalculate tcp chechsum */
             bzero(&(tcp_hdr->tcp_sum), 2);
             uint16_t tcp_cksum = cksum(tcp_hdr, len - 
@@ -351,14 +350,16 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             tcp_hdr->tcp_sum = tcp_cksum;
 
           }
+
           /* if the tcp is from external to internal */
           if (strcmp(pkt->iface, INT_INTERFACE) == 0) {
             /* get destination port number */
-            uint16_t aux_ext = tcp_hdr->dst_port;
+            uint16_t aux_ext = tcp_hdr->port_dst;
 
             /* find nat mapping */            
             struct sr_nat_mapping *nat_mapping;
-            nat_mapping = sr_nat_lookup_external(sr->nat, aux_ext, nat_mapping_tcp);
+            nat_mapping = sr_nat_lookup_external(sr->nat, aux_ext, nat_mapping_tcp, 
+              ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin);
             
             /* If no mapping, drop the packet.*/
             if (!nat_mapping) {
@@ -369,7 +370,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* translate ip destination address */
             ip_hdr->ip_dst = nat_mapping->ip_int;
             /* translate tcp destination port number */
-            tcp_hdr->src_port = nat_mapping->aux_int;
+            tcp_hdr->port_src = nat_mapping->aux_int;
             /* recalculate tcp chechsum */
             bzero(&(tcp_hdr->tcp_sum), 2);
             uint16_t tcp_cksum = cksum(tcp_hdr, len - 
@@ -534,7 +535,8 @@ int sr_handle_pkt_for_me(struct sr_instance* sr,
         /* arp miss */
         else {
           uint8_t *arp_packet = construct_arp_buff(o_iface->addr,  o_iface->ip, rtable->gw.s_addr);
-          sr_send_packet(sr, arp_packet, sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr), rtable->interface);
+          sr_send_packet(sr, arp_packet, sizeof(struct sr_ethernet_hdr) + 
+            sizeof(struct sr_arp_hdr), rtable->interface);
           sr_arpcache_queuereq(&(sr->cache), rtable->gw.s_addr, sr_pkt, len, rtable->interface);
         }      
       }
@@ -677,12 +679,12 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	  /* Look for nat mapping for corresponding src_ip and src_aux. */
       	  struct sr_nat_mapping *nat_mapping;
       	  nat_mapping = sr_nat_lookup_internal(sr->nat, original_ip_src, 
-            *original_icmp_id, nat_mapping_icmp);
+            *original_icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0);
 	  
       	  /* Create new mapping if existing mapping not found.*/
       	  if (!nat_mapping) {
       	    nat_mapping = sr_nat_insert_mapping(sr->nat, original_ip_src, 
-      					*original_icmp_id, nat_mapping_icmp);
+      					*original_icmp_id, nat_mapping_icmp, 0, 0, 0);
       	  }
       	  
       	  struct sr_if* o_iface = sr_get_interface(sr, EXT_INTERFACE);
@@ -746,7 +748,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       else if (original_icmp_hdr->icmp_type == 0) {
       	/* Look for nat mapping for corresponding dst_ip and dst_aux. */
       	struct sr_nat_mapping *nat_mapping;
-      	nat_mapping = sr_nat_lookup_external(sr->nat, *original_icmp_id, nat_mapping_icmp);
+      	nat_mapping = sr_nat_lookup_external(sr->nat, *original_icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0);
       	
       	if (!nat_mapping) {
       	  fprintf(stderr , "** Error: No mapping found when forwarding icmp reply.");
@@ -826,13 +828,13 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       sr_tcp_hdr_t *tcp_hdr;
       tcp_hdr = (sr_tcp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + 
         sizeof(struct sr_ip_hdr));
-      uint16_t original_tcp_src_port = tcp_hdr->src_port;
-      uint16_t original_tcp_dst_port = tcp_hdr->dst_port;
+      uint16_t original_tcp_src_port = tcp_hdr->port_src;
+      uint16_t original_tcp_dst_port = tcp_hdr->port_dst;
 
       unsigned int flag = tcp_hdr->flag;
-      sr->nat.tcp_fin = flag & 1;
-      sr->nat.tcp_syn = flag & (1<<1);
-      sr->nat.tcp_ack = flag & (1<<4);
+      int ack = flag & (1<<4);
+      int syn = flag & (1<<1);          
+      int fin = flag & 1;          
 
       /* if the tcp is from internal to external */
       if (strcmp(interface, INT_INTERFACE) == 0) {  
@@ -850,12 +852,12 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         /* Look for nat mapping for corresponding src_ip and src_aux. */
         struct sr_nat_mapping *nat_mapping;
         nat_mapping = sr_nat_lookup_internal(sr->nat, original_ip_src, 
-          original_tcp_src_port, nat_mapping_tcp);
+          original_tcp_src_port, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin);
   
         /* Create new mapping if existing mapping not found.*/
         if (!nat_mapping) {
           nat_mapping = sr_nat_insert_mapping(sr->nat, original_ip_src, 
-            original_tcp_src_port, nat_mapping_tcp);
+            original_tcp_src_port, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, 1);
         }
         
         struct sr_if* o_iface = sr_get_interface(sr, EXT_INTERFACE);
@@ -885,7 +887,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           ip_hdr->ip_sum = ip_cksum;
 
           /* update tcp header */          
-          tcp_hdr->src_port = nat_mapping->aux_ext;
+          tcp_hdr->port_src = nat_mapping->aux_ext;
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
           uint16_t tcp_cksum = cksum(tcp_hdr, len - 
@@ -913,7 +915,8 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
 
         /* Look for nat mapping for corresponding dst_ip and dst_aux. */
         struct sr_nat_mapping *nat_mapping;
-        nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, nat_mapping_icmp);
+        nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, 
+          nat_mapping_icmp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin);
         
         /* if no mapping, drop the packet */
         if (!nat_mapping) {
@@ -958,7 +961,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           ip_hdr->ip_sum = ip_cksum;
 
           /* update tcp header */          
-          tcp_hdr->dst_port = nat_mapping->aux_int;
+          tcp_hdr->port_dst = nat_mapping->aux_int;
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
           uint16_t tcp_cksum = cksum(tcp_hdr, len - 

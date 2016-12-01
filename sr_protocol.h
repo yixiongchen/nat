@@ -149,8 +149,8 @@ typedef struct sr_ip_hdr sr_ip_hdr_t;
  */
 struct sr_tcp_hdr
   {
-    uint16_t src_port;     /* source port */
-    uint16_t dst_port;      /* destination port */
+    uint16_t port_src;     /* source port */
+    uint16_t port_dst;      /* destination port */
     uint32_t seq_num;     /* sequence number */
     uint32_t ack;      /* acknowledgment */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
