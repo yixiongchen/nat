@@ -235,26 +235,38 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	  sr_icmp_hdr_t *icmp_hdr;
       	  icmp_hdr = (sr_icmp_hdr_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr)
       	    + sizeof(struct sr_ip_hdr));
-      	  
+      	  printf("pass icmp.\n");
       	  /* If it's an ICMP echo request*/
       	  if (icmp_hdr->icmp_type == 8) {
+            printf("pass icmp = 8.\n");
             uint16_t *aux_src_int;
             uint32_t *ip_src_int;
             ip_src_int = &(ip_hdr->ip_src);
             aux_src_int = (uint16_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) 
               + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
 
-            struct sr_nat_mapping *nat_mapping;
-            nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
-              *aux_src_int, nat_mapping_icmp);
+            printf("next is mapping for icmp = 8.\n");
 
+            struct sr_nat_mapping *nat_mapping;
+
+            printf("src_ip %u\n", *ip_src_int );
+            printf("port_int %d\n",*aux_src_int);
+
+            if(sr-> nat == NULL) {
+
+            printf("sr_nat is null %u\n", *ip_src_int );
+            }
+
+            nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, *aux_src_int, nat_mapping_icmp);
+
+             printf("pass look up.\n");
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
+              
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
                    *aux_src_int, nat_mapping_icmp);              
         	  }
 
-            printf("EXT_IP: %u\n", nat_mapping->ip_ext);
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    
       	    /* update icmp query id */
