@@ -49,6 +49,7 @@ struct sr_nat {
   int tcp_syn;
   int tcp_ack;  
   uint32_t ip_ext;
+  
 
   struct sr_nat_mapping *mappings;
   /* threading */
