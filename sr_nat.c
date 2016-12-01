@@ -31,6 +31,7 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   pthread_create(&(nat->thread), &(nat->thread_attr), sr_nat_timeout, nat);
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
+  nat->max_port = 1024;
   /* init tcp para */
     
   return success;
@@ -220,77 +221,33 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   pthread_mutex_lock(&(nat->lock));
 
   /* handle insert here, create a mapping, and then return a copy of it */
-  struct sr_nat_mapping *mapping = (struct sr_nat_mapping*)malloc(sizeof (struct sr_nat_mapping));
-  struct sr_nat_mapping *current = nat->mappings;
-
+  struct sr_nat_mapping *map= NULL;
   /*loop to the end of list and get the largest external port number */
-  int port = 1024;
-
-  if(nat->mappings == NULL){
-    port = 1024;
-  }
-  else{
-    while(current -> next != NULL){
-      if(port < current->aux_ext){
-        port = current->aux_ext;
-      }
-      current = current->next;
-    }
-    port = port + 1;
-  }
+  map = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
   /* create a new external port number */
-  
   /* update new mapping data */
-  mapping->type = type;
-  mapping->ip_int = ip_int;
-  mapping->ip_ext = ext_ip;
-  mapping->aux_int = aux_int;
-  mapping->aux_ext = port;
+  map->type = type;
+  map->ip_int = ip_int;
+  map->ip_ext = NULL;
+  map->aux_int = aux_int;
+  map->aux_ext = nat->max_port + 1;
   time_t now = time(NULL);
-  mapping->last_updated = now;
-  printf("pass 1 %d\n", port);  
+  map->last_updated = now;
   /* handle icmp */
   if(type == nat_mapping_icmp){
-    mapping->conns = NULL; 
+    map->conns = NULL; 
   }
   /* handle tcp */
   else if(type == nat_mapping_tcp){
     struct sr_nat_connection* new_conn = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
     new_conn->next = NULL;
-    mapping->conns = new_conn;
+    map->conns = new_conn;
   }
-  mapping->next = NULL;
+  nat->max_port = map->aux_ext;
+  map->next = nat->mappings;
 
-  /* insert new mapping into nat*/
-  if(nat->mappings == NULL){
-    nat->mappings = mapping;
-  }
-  else{
-    current->next = mapping;
-  }
-
-
-
-
-
-
-  /*check nat mapping
-  struct sr_nat_mapping * check = nat->mappings;
-  while(check!= NULL){
-    print_addr_ip_int(check->ip_int);
-    print_addr_ip_int(check->ip_ext);
-    printf("int_port:%d outport:%d\n", check->aux_int, check->aux_ext);
-    check= check->next;   
-  }
-  */
-
-
-
-
-
-  printf("pass insrt_new_mapping out-port:%d\n\n", port);
   pthread_mutex_unlock(&(nat->lock));
-  return mapping;
+  return map;
 }
 
 
