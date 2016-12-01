@@ -317,7 +317,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
           tcp_hdr = (sr_tcp_hdr_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) + 
             sizeof(struct sr_ip_hdr));
 
-          unsigned int flag = tcp_hdr->flag;
+          uint8_t flag = tcp_hdr->flag;
           int ack = flag & (1<<4);
           int syn = flag & (1<<1);          
           int fin = flag & 1;          
@@ -831,7 +831,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       uint16_t original_tcp_src_port = tcp_hdr->port_src;
       uint16_t original_tcp_dst_port = tcp_hdr->port_dst;
 
-      unsigned int flag = tcp_hdr->flag;
+      uint8_t flag = tcp_hdr->flag;
       int ack = flag & (1<<4);
       int syn = flag & (1<<1);          
       int fin = flag & 1;          

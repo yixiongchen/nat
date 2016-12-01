@@ -126,7 +126,7 @@ struct sr_ip_hdr
     unsigned int ip_v:4;		/* version */
     unsigned int ip_hl:4;		/* header length */
 #else
-#error "Byte ordering ot specified " 
+#error "Byte ordering not specified " 
 #endif 
     uint8_t ip_tos;			/* type of service */
     uint16_t ip_len;			/* total length */
@@ -154,16 +154,15 @@ struct sr_tcp_hdr
     uint32_t seq_num;     /* sequence number */
     uint32_t ack;      /* acknowledgment */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-    unsigned int flag:6;   /* flags */
-    unsigned int reserved:6;    /* reserved */
+    unsigned int reserved:4;    /* reserved */
     unsigned int data_offset:4;   /* data offset */
 #elif __BYTE_ORDER == __BIG_ENDIAN
     unsigned int data_offset:4;   /* data offset */
-    unsigned int reserved:6;    /* reserved */
-    unsigned int flag:6;   /* flags */    
+    unsigned int reserved:4;    /* reserved */
 #else
-#error "Byte ordering ot specified " 
+#error "Byte ordering not specified " 
 #endif
+    uint8_t flag;
     uint16_t adv_window;      /* advertised window */
     uint16_t tcp_sum;      /* checksum */
     uint16_t urg_pointer;  /* urgent pointer */

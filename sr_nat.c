@@ -243,7 +243,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   /* update new mapping data */
   mapping->type = type;
   mapping->ip_int = ip_int;
-  mapping->ip_ext = ext_ip;
+  mapping->ip_ext = nat->ip_ext;
   mapping->aux_int = aux_int;
   mapping->aux_ext = port;
   time_t now = time(NULL);
