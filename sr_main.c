@@ -194,6 +194,10 @@ int main(int argc, char **argv)
     sr.nat->icmp_query_timeout = icmp_query_timeout;
     sr.nat->tcp_est_timeout = tcp_est_timeout;
     sr.nat->tcp_trans_timeout = tcp_trans_timeout;
+    struct sr_if *nat_ext_iface; /* nat's outgoing interface */
+    nat_ext_iface = sr_get_interface(sr, EXT_INTERFACE);
+    assert(nat_ext_iface);
+    sr->nat->ip_ext = nat_ext_iface->ip;
     /* NAT */
 
     /* -- whizbang main loop ;-) */

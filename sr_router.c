@@ -224,9 +224,6 @@ void sr_handle_arp_reply(struct sr_instance* sr,
 
       /* Send packet with NAT.*/
       if (sr->nat_on == 1) {
-        struct sr_if nat_ext_iface; /* nat's outgoing interface */
-        nat_ext_iface = sr_get_interface(sr, EXT_INTERFACE);
-        assert(nat_ext_iface);
 
         printf("In arp queue with NAT.\n");
 
@@ -252,7 +249,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             printf("src_ip %u\n", *ip_src_int );
             printf("port_int %d\n",*aux_src_int);
 
-            if(sr-> nat == NULL) {
+            if(sr->nat == NULL) {
 
             printf("sr_nat is null %u\n", *ip_src_int );
             }
@@ -262,7 +259,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
              printf("pass look up.\n");
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
-              
+
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
                    *aux_src_int, nat_mapping_icmp);              
         	  }
@@ -320,6 +317,11 @@ void sr_handle_arp_reply(struct sr_instance* sr,
           sr_tcp_hdr_t *tcp_hdr;
           tcp_hdr = (sr_tcp_hdr_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) + 
             sizeof(struct sr_ip_hdr));
+
+          unsigned int flag = tcp_hdr->flag;
+          sr->nat.tcp_fin = flag & 1;
+          sr->nat.tcp_syn = flag & (1<<1);
+          sr->nat.tcp_ack = flag & (1<<4);
 
           /* if the tcp is from internal to external */
           if (strcmp(pkt->iface, EXT_INTERFACE) == 0) {
@@ -828,9 +830,9 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       uint16_t original_tcp_dst_port = tcp_hdr->dst_port;
 
       unsigned int flag = tcp_hdr->flag;
-      int fin = flag & 1;
-      int syn = flag & (1<<1);
-      int ack = flag & (1<<4);
+      sr->nat.tcp_fin = flag & 1;
+      sr->nat.tcp_syn = flag & (1<<1);
+      sr->nat.tcp_ack = flag & (1<<4);
 
       /* if the tcp is from internal to external */
       if (strcmp(interface, INT_INTERFACE) == 0) {  
