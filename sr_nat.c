@@ -245,6 +245,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   }
   nat->max_port = map->aux_ext;
   map->next = nat->mappings;
+  nat->mappings = map;
 
   pthread_mutex_unlock(&(nat->lock));
   return map;
