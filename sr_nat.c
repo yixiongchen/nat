@@ -228,7 +228,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   /* update new mapping data */
   map->type = type;
   map->ip_int = ip_int;
-  map->ip_ext = NULL;
+  map->ip_ext = nat->ip_ext;
   map->aux_int = aux_int;
   map->aux_ext = nat->max_port + 1;
   time_t now = time(NULL);
@@ -238,7 +238,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     map->conns = NULL; 
   }
   /* handle tcp */
-  else if(type == nat_mapping_tcp){
+  else if(type==nat_mapping_tcp){
     struct sr_nat_connection* new_conn = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
     new_conn->next = NULL;
     map->conns = new_conn;
