@@ -49,7 +49,7 @@ struct sr_nat {
   int tcp_est_timeout;  /* TCP Established Idle Timeout in seconds */
   int tcp_trans_timeout;  /* TCP Transitory Idle Timeout in seconds */
   uint32_t ip_ext;
-
+  uint16_t max_port;
   struct sr_nat_mapping *mappings;
   /* threading */
   pthread_mutex_t lock;
