@@ -118,7 +118,7 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
 /* Get the mapping associated with given external port.
    You must free the returned structure if it is not NULL. */
 struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
-    uint16_t aux_ext, sr_nat_mapping_type type ) {
+    uint16_t aux_ext, sr_nat_mapping_type type, uint32_t src_ip, uint16_t src_port, int ack, int syn, int fin) {
 
   pthread_mutex_lock(&(nat->lock));
 
@@ -166,7 +166,7 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
 /* Get the mapping associated with given internal (ip, port) pair.
    You must free the returned structure if it is not NULL. */
 struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type ) {
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t dst_ip, uint16_t dst_port, int ack, int syn, int fin) {
   pthread_mutex_lock(&(nat->lock));
   printf("begin %d\n",aux_int);
   /* handle lookup here, malloc and assign to copy. */
@@ -219,7 +219,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
    Actually returns a copy to the new mapping, for thread safety.
  */
 struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t ext_ip ) {
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t ext_ip, uint32_t outhost_ip, uint16_t outhost_port, int sendsyn) {
   
   pthread_mutex_lock(&(nat->lock));
 
