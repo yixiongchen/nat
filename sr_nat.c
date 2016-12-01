@@ -32,11 +32,7 @@ int sr_nat_init(struct sr_nat *nat) { /* Initializes the nat */
   /* CAREFUL MODIFYING CODE ABOVE THIS LINE! */
   nat->mappings = NULL;
   /* init tcp para */
-  nat->p_fin = 0;
-  int nat->tcp_syn = 0;
-  int nat->tcp_ack = 0;
-  uint32_t nat->ip_ext = 0;
-  
+    
   return success;
 }
 
@@ -219,7 +215,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
    Actually returns a copy to the new mapping, for thread safety.
  */
 struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t ext_ip, uint32_t outhost_ip, uint16_t outhost_port, int sendsyn) {
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t outhost_ip, uint16_t outhost_port, int sendsyn) {
   
   pthread_mutex_lock(&(nat->lock));
 

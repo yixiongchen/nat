@@ -53,26 +53,6 @@ struct sr_if* sr_get_interface(struct sr_instance* sr, const char* name)
     return 0;
 } /* -- sr_get_interface -- */
 
-struct sr_if* nat_get_interface(struct sr_nat* nat, const char* name)
-{
-    struct sr_if* if_walker = 0;
-
-    /* -- REQUIRES -- */
-    assert(name);
-    assert(nat);
-
-    if_walker = nat->if_list;
-    while(if_walker)
-    {
-       if(!strncmp(if_walker->name,name,sr_IFACE_NAMELEN))
-        { return if_walker; }
-        if_walker = if_walker->next;
-    }
-
-    return 0;
-} /* -- sr_get_interface -- */
-
-
 /*--------------------------------------------------------------------- 
  * Method: sr_add_interface(..)
  * Scope: Global
