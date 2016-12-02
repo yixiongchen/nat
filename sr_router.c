@@ -278,6 +278,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - 
       	      sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
+            free(nat_mapping);
         	}
       	  /* If it's an ICMP echo reply*/
       	  else if (icmp_hdr->icmp_type == 0){
@@ -307,6 +308,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - 
       	      sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
+            free(nat_mapping);
           }
 	      }
       
@@ -348,6 +350,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             uint16_t tcp_cksum = cksum(tcp_hdr, len - 
               sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
             tcp_hdr->tcp_sum = tcp_cksum;
+            free(nat_mapping);
 
           }
 
@@ -375,7 +378,8 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             bzero(&(tcp_hdr->tcp_sum), 2);
             uint16_t tcp_cksum = cksum(tcp_hdr, len - 
               sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
-            tcp_hdr->tcp_sum = tcp_cksum; 
+            tcp_hdr->tcp_sum = tcp_cksum;
+            free(nat_mapping);
           }
         }
       }
@@ -636,7 +640,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         char* interface) 
 {
   sr_ethernet_hdr_t *ethernet_hdr;
-  sr_ip_hdr_t *ip_hdr;  
+  sr_ip_hdr_t * ip_hdr;  
 
   ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr));
   assert(ip_hdr);
@@ -899,6 +903,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           print_hdrs(sr_pkt, len);
           sr_send_packet(sr, sr_pkt, len, EXT_INTERFACE);
           free(arp_entry);
+          free(nat_mapping);
         }
         /* arp miss */
         else {
@@ -980,9 +985,8 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
              INT_INTERFACE);
         }
         free(sr_pkt);
-        free(rtable); 
-        free(nat_mapping); 
-
+        free(rtable);
+        free(nat_mapping);
       }
     }
   }

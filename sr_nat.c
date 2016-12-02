@@ -230,7 +230,7 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   map->ip_ext = nat->ip_ext;
   map->aux_int = aux_int;
   map->aux_ext = nat->max_port + 1;
-  
+
   time_t now = time(NULL);
   map->last_updated = now;
   /* handle icmp */
@@ -248,7 +248,9 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   nat->mappings = map;
 
   pthread_mutex_unlock(&(nat->lock));
-  return map;
+  struct sr_nat_mapping *copy = malloc(sizeof(struct sr_nat_mapping));
+  memcpy(copy, map, sizeof(struct sr_nat_mapping));
+  return copy;
 }
 
 
