@@ -409,25 +409,25 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
         return -1;
   }
 
-  /* verify ip header checksum */  
-  if (cksum(ip_hdr, sizeof(struct sr_ip_hdr)) != 0xffff) {
-    fprintf(stderr , "** Error: ip_packet received with error\n");
-    return -1;
-  }
-
-  sr_ethernet_hdr_t *ethernet_hdr;
+  
   sr_ip_hdr_t *ip_hdr;
   sr_icmp_t8_hdr_t *icmp_t8_hdr;
   sr_tcp_hdr_t *tcp_hdr;
   struct sr_nat_mapping *nat_mapping;
 
   ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr));
-  assert(ip_hdr);  
+  assert(ip_hdr); 
+
+  /* verify ip header checksum */  
+  if (cksum(ip_hdr, sizeof(struct sr_ip_hdr)) != 0xffff) {
+    fprintf(stderr , "** Error: ip_packet received with error\n");
+    return -1;
+  }
 
   /* Look for nat mapping for corresponding dst_ip and dst_aux. */
   /* if the ip packet is an icmp packet */
   if (ip_hdr->ip_p == ip_protocol_icmp) {
-    icmp_t8_hdr = (sr_icmp_t3_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr) + 
+    icmp_t8_hdr = (sr_icmp_t8_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + 
     sizeof(struct sr_ip_hdr));
     
     nat_mapping = sr_nat_lookup_external(sr->nat, icmp_t8_hdr->icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0);
@@ -443,7 +443,7 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
     int syn = flag & (1<<1);          
     int fin = flag & 1;          
 
-    nat_mapping = sr_nat_lookup_external(sr_nat, tcp_hdr->port_dst, nat_mapping_tcp, 
+    nat_mapping = sr_nat_lookup_external(sr->nat, tcp_hdr->port_dst, nat_mapping_tcp, 
       ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin);
   }  
   
@@ -452,7 +452,7 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
 
   /* if the ip packet is for me */
   struct sr_if *my_iface;  
-  struct sr_nat_mapping *mapping;
+
   for (my_iface = sr->if_list; my_iface != NULL; my_iface = my_iface->next){
     if ((ip_hdr->ip_dst == my_iface->ip) && (!nat_mapping)) {
       sr_handle_pkt_for_me(sr, packet, len, interface);
