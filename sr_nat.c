@@ -98,7 +98,7 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
       */
 
       else{
-        
+        pthread_mutex_unlock(&(nat->lock));
         return NULL;
 
       }
@@ -131,6 +131,7 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
       copy->ip_ext =current->ip_ext;
       copy->aux_int = current->aux_int;
       copy->aux_ext =current->aux_ext;
+      
       copy->last_updated = current->last_updated;
       struct sr_nat_connection *connection;
       /*copy tcp connections*/
