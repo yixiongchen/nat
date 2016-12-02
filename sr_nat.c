@@ -195,6 +195,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
           struct sr_nat_connection *nested = (struct sr_nat_connection*) malloc(sizeof(struct sr_nat_connection));
 	  /* Check if it's the same connection*/
 	  if (nested->outhost_ip == dst_ip && nested->outhost_port == dst_port){
+	    /*
 	    if (ack && !syn && !fin){
 	      switch (nested->state){
 		case SYN_SENT:
@@ -204,7 +205,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
 		  nested->state = CLOSING;
 		  break;
 	      }
-	    }
+	    }*/
 	  }
           memcpy(nested, next_conn, sizeof(struct sr_nat_connection));
           result-> next = nested;
