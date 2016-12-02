@@ -131,7 +131,7 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
       copy->ip_ext =current->ip_ext;
       copy->aux_int = current->aux_int;
       copy->aux_ext =current->aux_ext;
-      
+
       copy->last_updated = current->last_updated;
       struct sr_nat_connection *connection;
       /*copy tcp connections*/
@@ -193,6 +193,20 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
         /*loop over each tcp connection*/
         while(next_conn != NULL){
           struct sr_nat_connection *nested = (struct sr_nat_connection*) malloc(sizeof(struct sr_nat_connection));
+	  /* Check if it's the same connection*/
+	  if (nested->outhost_ip == dst_ip && nested->outhost_port == dst_port){
+	    /*
+	    if (ack && !syn && !fin){
+	      switch (nested->state){
+		case SYN_SENT:
+		  nested->state = ESTAB;
+		  break;
+		case FIN_WAIT_1:
+		  nested->state = CLOSING;
+		  break;
+	      }
+	    }*/
+	  }
           memcpy(nested, next_conn, sizeof(struct sr_nat_connection));
           result-> next = nested;
           result = result-> next;
@@ -242,6 +256,17 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   else if(type==nat_mapping_tcp){
     struct sr_nat_connection* new_conn = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
     new_conn->next = NULL;
+    new_conn->syn = 1;
+    new_conn->ack = 0;
+    new_conn->fin = 0;
+    new_conn->outhost_port = outhost_port;
+    new_conn->outhost_ip = outhost_ip;
+    if (sendsyn){
+      new_conn->state = SYN_SENT;
+    } 
+    else{
+      new_conn->state = SYN_RCVD;
+    }
     map->conns = new_conn;
   }
   nat->max_port = map->aux_ext;

@@ -12,21 +12,33 @@ typedef enum {
   /* nat_mapping_udp, */
 } sr_nat_mapping_type;
 
+typedef enum {
+  SYN_SENT,
+  SYN_RCVD,
+  ESTAB,
+  FIN_WAIT_1,
+  FIN_WAIT_2,
+  CLOSE_WAIT,
+  LAST_ACK,
+  CLOSING
+} connection_state;
+
 typedef int Boolean;
 #define true 1
 #define false 0
 
 
 
+
 struct sr_nat_connection {
   /* add TCP connection state data members here */
   time_t initialized; /*time initialize a tcp session*/
-  Boolean status; /* it is closed or open*/
-  int sequence; /*sequences number of TCP packets*/
-  uint32_t ack; /* acknowledgment */
-  int tcp_fin;
-  int tcp_syn;
-  int tcp_ack; 
+  connection_state state; /* it is closed or open*/
+  int fin;
+  int syn;
+  int ack;
+  uint32_t outhost_ip;
+  uint32_t outhost_port;
   struct sr_nat_connection *next;
 };
 
