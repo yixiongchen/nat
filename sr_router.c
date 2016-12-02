@@ -270,8 +270,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	      sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
       	    icmp_hdr_new->icmp_id = nat_mapping->aux_ext;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
-      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - 
-      	      sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, sizeof(struct sr_icmp_t8_hdr));
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
             free(nat_mapping);
         	}
@@ -292,16 +291,12 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	    ip_hdr->ip_dst = nat_mapping->ip_int;
       	    
       	    /* update icmp query id */
-      	    sr_icmp_hdr_t *icmp_hdr_new;
-      	    icmp_hdr_new = (sr_icmp_hdr_t *)(pkt->buf + 
+      	    sr_icmp_t8_hdr_t *icmp_hdr_new;
+      	    icmp_hdr_new = (sr_icmp_t8_hdr_t *)(pkt->buf + 
       	      sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
-      	    uint16_t *icmp_id;
-      	    icmp_id = (uint16_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) + 
-      	      sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
-      	    *icmp_id = nat_mapping->aux_int;
+      	    icmp_hdr_new->icmp_id = nat_mapping->aux_ext;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
-      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - 
-      	      sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, sizeof(struct sr_icmp_t8_hdr));
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
             free(nat_mapping);
           }
@@ -758,8 +753,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	      sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
       	    icmp_hdr_new->icmp_id = nat_mapping->aux_ext;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
-      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - 
-      	      sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, sizeof(struct sr_icmp_t8_hdr));
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
 
       	    /* send frame to next hop */
@@ -827,16 +821,12 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	    ip_hdr->ip_sum = ip_cksum;
       	    
       	    /* update icmp query id */
-      	    sr_icmp_hdr_t *icmp_hdr_new;
-      	    icmp_hdr_new = (sr_icmp_hdr_t *)(sr_pkt + 
+      	    sr_icmp_t8_hdr_t *icmp_hdr_new;
+      	    icmp_hdr_new = (sr_icmp_t8_hdr_t *)(sr_pkt + 
       	      sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
-      	    uint16_t *icmp_id;
-      	    icmp_id = (uint16_t*)(sr_pkt + sizeof(struct sr_ethernet_hdr) + 
-      	      sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
-      	    *icmp_id = nat_mapping->aux_int;
+      	    icmp_hdr_new->icmp_id = nat_mapping->aux_int;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
-      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - 
-      	      sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, sizeof(struct sr_icmp_t8_hdr));
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
 
       	    /* send frame to next hop */

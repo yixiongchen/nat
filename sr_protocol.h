@@ -109,7 +109,7 @@ struct sr_icmp_t8_hdr {
   uint16_t icmp_sum;
   uint16_t icmp_id;
   uint16_t icmp_seq_num;
-
+  uint32_t data;
 } __attribute__ ((packed)) ;
 typedef struct sr_icmp_t8_hdr sr_icmp_t8_hdr_t;
 
