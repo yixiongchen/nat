@@ -226,8 +226,6 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       ip_hdr->ip_ttl--;
       bzero(&(ip_hdr->ip_sum), 2);
       
-      printf("\n\n\n\n\n\nat_on = %d\n\n\n\n\n\n", sr->nat_on);
-
       /* Send packet with NAT.*/
       if (sr->nat_on == 1) {
 
@@ -741,8 +739,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	    /* update ip header */
       	    ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
       	    ip_hdr->ip_ttl--;
-            printf("EXT_IP: %u\n", nat_mapping->ip_ext);
-      	    ip_hdr->ip_src = sr->nat->ip_ext;
+      	    ip_hdr->ip_src = nat_mapping->ip_ext;
       	    bzero(&(ip_hdr->ip_sum), 2);  
       	    uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
       	    ip_hdr->ip_sum = ip_cksum;
@@ -914,7 +911,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           /* update ip header */
           ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
           ip_hdr->ip_ttl--;
-          ip_hdr->ip_src = sr->nat->ip_ext;
+          ip_hdr->ip_src = nat_mapping->ip_ext;
           bzero(&(ip_hdr->ip_sum), 2);  
           uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
           ip_hdr->ip_sum = ip_cksum;
