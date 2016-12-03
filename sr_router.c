@@ -370,7 +370,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* translate ip destination address */
             ip_hdr->ip_dst = nat_mapping->ip_int;
             /* translate tcp destination port number */
-            tcp_hdr->port_src = nat_mapping->aux_int;
+            tcp_hdr->port_dst = nat_mapping->aux_int;
             /* recalculate tcp chechsum */
             /*
             bzero(&(tcp_hdr->tcp_sum), 2);
