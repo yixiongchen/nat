@@ -881,12 +881,16 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
     /* If it's a TCP packet*/
     else if (ip_hdr->ip_p == ip_protocol_tcp) {
 
+      printf("1\n");
+
       sr_tcp_hdr_t *tcp_hdr;
       /*
       tcp_hdr = (sr_tcp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + 
         sizeof(struct sr_ip_hdr));
       */
       tcp_hdr = (sr_tcp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + ip_hdr->ip_hl*4);
+
+      printf("2\n");
 
       uint16_t original_tcp_src_port = tcp_hdr->port_src;
       uint16_t original_tcp_dst_port = tcp_hdr->port_dst;
@@ -899,8 +903,12 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       /* if the tcp is from internal to external */
       if (strcmp(interface, INT_INTERFACE) == 0) {  
 
+        printf("3\n");
+
         /* lookup the longest prefix match */
         struct sr_rt *rtable = sr_longest_prefix_match(sr, original_ip_dst);
+
+        printf("4\n");
 
         /* if no match, icmp net unreachable */
         if (! rtable->gw.s_addr) {
@@ -913,7 +921,9 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         struct sr_nat_mapping *nat_mapping;
         nat_mapping = sr_nat_lookup_internal(sr->nat, original_ip_src, 
           ntohs(original_tcp_src_port), nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin, 1);
-  
+        
+        printf("5\n");
+
         /* Create new mapping if existing mapping not found.*/
         if (!nat_mapping) {
           nat_mapping = sr_nat_insert_mapping(sr->nat, original_ip_src, 
@@ -927,6 +937,8 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         uint8_t *sr_pkt = (uint8_t *)malloc(len);
         memcpy(sr_pkt, packet, len);
         tcp_hdr = (sr_tcp_hdr_t *)(sr_pkt + sizeof(sr_ethernet_hdr_t) + ip_hdr->ip_hl*4);
+
+        printf("6\n");
 
         /* check arp cache for next hop mac */
         struct sr_arpentry *arp_entry; 
@@ -947,6 +959,8 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
           ip_hdr->ip_sum = ip_cksum;
 
+          printf("7\n");
+
           /* update tcp header */          
           printf("UPDATE TCP PORT TO %d...................\n", nat_mapping->aux_ext);
           tcp_hdr->port_src = htons(nat_mapping->aux_ext);
@@ -958,7 +972,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
             sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
           tcp_hdr->tcp_sum = tcp_cksum;
           */
-          
+
           /* create a pseudo tcp packet for computing tcp check sum */
           sr_tcp_psd_hdr_t *tcp_psd_hdr;
           int tcp_len = (int)ntohs(ip_hdr->ip_len) - (int)ip_hdr->ip_hl * 4;
@@ -981,9 +995,10 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           printf("Send packet:\n");
           print_hdrs(sr_pkt, len);
           sr_send_packet(sr, sr_pkt, len, EXT_INTERFACE);
+          printf("9\n");
           free(arp_entry);
-          /* free(nat_mapping); */
           free(psd_pkt);
+
         }
         /* arp miss */
         else {
@@ -1003,6 +1018,8 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         nat_mapping = sr_nat_lookup_external(sr->nat, ntohs(original_tcp_dst_port), 
           nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
         
+        printf("12\n");
+
         /* if no mapping, drop the packet */
         if (!nat_mapping) {
           sleep(6);
@@ -1028,6 +1045,8 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           return;
         }
 
+        printf("13\n");
+
         /* match */        
         struct sr_if* o_iface = sr_get_interface(sr, INT_INTERFACE);
         assert(o_iface);
@@ -1041,20 +1060,31 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         struct sr_arpentry *arp_entry; 
         arp_entry = sr_arpcache_lookup(&(sr->cache), rtable->gw.s_addr);
 
+        printf("14\n");
+
         /*arp cache hit */
         if (arp_entry) {
           /* update ethernet header */
           ethernet_hdr = (sr_ethernet_hdr_t *)sr_pkt;
-          memcpy(ethernet_hdr->ether_dhost, arp_entry->mac, ETHER_ADDR_LEN); 
-          memcpy(ethernet_hdr->ether_shost, o_iface->addr, ETHER_ADDR_LEN); 
+          memcpy(ethernet_hdr->ether_dhost, arp_entry->mac, ETHER_ADDR_LEN);
+          printf("14.1\n");
+          memcpy(ethernet_hdr->ether_shost, o_iface->addr, ETHER_ADDR_LEN);
+          printf("14.2\n");
         
           /* update ip header */
           ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
+          printf("14.3\n");
           ip_hdr->ip_ttl--;
+          printf("14.4\n");
           ip_hdr->ip_dst = nat_mapping->ip_int;
-          bzero(&(ip_hdr->ip_sum), 2);  
+          printf("14.5\n");
+          bzero(&(ip_hdr->ip_sum), 2);
+          printf("14.6\n");
           uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
+          printf("14.7\n");
           ip_hdr->ip_sum = ip_cksum;
+
+          printf("15\n");
 
           /* update tcp header */          
           tcp_hdr->port_dst = htons(nat_mapping->aux_int); 
@@ -1086,6 +1116,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           
           
           /* send frame to next hop */
+          printf("16\n");
           printf("Send packet:\n");
           print_hdrs(sr_pkt, len);
           sr_send_packet(sr, sr_pkt, len, INT_INTERFACE);
@@ -1094,12 +1125,16 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         }  
         /* arp miss */
         else {
+          printf("14.0001\n");
           sr_arpcache_queuereq(&(sr->cache), rtable->gw.s_addr, packet, len, 
              INT_INTERFACE);
+          printf("14.0002\n");
         }
+        printf("17\n");
         free(sr_pkt);
         free(rtable);
         free(nat_mapping);
+        printf("18\n");
       }
     }
   }
