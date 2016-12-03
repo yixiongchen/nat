@@ -1121,7 +1121,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           print_hdrs(sr_pkt, len);
           sr_send_packet(sr, sr_pkt, len, INT_INTERFACE);
           free(arp_entry);
-          /* free(psd_pkt); */
+          free(psd_pkt);
         }  
         /* arp miss */
         else {
