@@ -216,8 +216,10 @@ struct sr_arpreq *sr_arpcache_queuereq(struct sr_arpcache *cache,
         strncpy(new_pkt->iface, iface, sr_IFACE_NAMELEN);
         new_pkt->next = req->packets;
         req->packets = new_pkt;
+        free(packet);
     }
     
+    printf("22\n");
     pthread_mutex_unlock(&(cache->lock));
     
     return req;
