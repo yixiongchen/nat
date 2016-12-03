@@ -295,7 +295,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	    sr_icmp_t8_hdr_t *icmp_hdr_new;
       	    icmp_hdr_new = (sr_icmp_t8_hdr_t *)(pkt->buf + 
       	      sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
-      	    icmp_hdr_new->icmp_id = nat_mapping->aux_ext;
+      	    icmp_hdr_new->icmp_id = nat_mapping->aux_int;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
       	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - sizeof(struct sr_ethernet_hdr) - 
               sizeof(struct sr_ip_hdr));
