@@ -44,7 +44,7 @@ int sr_nat_destroy(struct sr_nat *nat) {  /* Destroys the nat (free memory) */
   while(current != NULL){
     struct sr_nat_mapping* next = current->next;
     /* free sr_nat_mapping*/
-    free_memory(current);
+    free(current);
     current = next;
   }
   free(nat);
@@ -179,6 +179,7 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
   struct sr_nat_mapping *copy = NULL; 
   printf("begin to find internal ip with external port %d\n",  aux_ext);
   while(current != NULL){
+    printf("current mapping: ip_int = %d, ip_ext = %d, aux_int = %d, aux_ext = %d\n", current->ip_int, current->ip_ext, current->aux_int, current->aux_ext);
     if(current->type==type && current->aux_ext==aux_ext){
       printf("sucessfully find the internal ip with external port %d\n", aux_ext);
       if (is_first_time){
@@ -247,6 +248,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
   struct sr_nat_mapping *copy = NULL;
   time_t now = time(NULL);
   while(current != NULL){
+    printf("current mapping: ip_int = %d, ip_ext = %d, aux_int = %d, aux_ext = %d\n", current->ip_int, current->ip_ext, current->aux_int, current->aux_ext);
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
       printf("Found mapping with aux_ext = %d\n", current->aux_ext);
       if (is_first_time){
@@ -362,29 +364,6 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
   pthread_mutex_unlock(&(nat->lock));
   struct sr_nat_mapping *copy = malloc(sizeof(struct sr_nat_mapping));
   memcpy(copy, map, sizeof(struct sr_nat_mapping));
+  printf("Assigned copy: ip_int = %d, ip_ext = %d, aux_int = %d, aux_ext = %d\n", copy->ip_int, copy->ip_ext, copy->aux_int, copy->aux_ext);
   return copy;
 }
-
-
-
-/* free sr_nat_mapping struct
- */
-int free_memory(struct sr_nat_mapping* map){
-  if(map != NULL){
-    /* free all sr_nap_connections */
-    struct sr_nat_connection* connection = map->conns;
-    struct sr_nat_connection* next;
-    while(connection != NULL){
-      next = connection->next;
-      free(connection);
-      connection = next;
-    }
-    free(map);
-    return 1;
-  }
-  return 0;
-}
-
-
-
-
