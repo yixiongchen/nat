@@ -1121,8 +1121,10 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         }  
         /* arp miss */
         else {
+          printf("14.0001\n");
           sr_arpcache_queuereq(&(sr->cache), rtable->gw.s_addr, packet, len, 
              INT_INTERFACE);
+          printf("14.0002\n");
         }
         printf("17\n");
         free(sr_pkt);
