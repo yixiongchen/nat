@@ -269,7 +269,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
    Actually returns a copy to the new mapping, for thread safety.
  */
 struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t outhost_ip, uint16_t outhost_port, int sendsyn) {
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t outhost_ip, uint16_t outhost_port) {
   
   pthread_mutex_lock(&(nat->lock));
 
@@ -297,12 +297,15 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     new_conn->next = NULL;
     new_conn->outhost_port = outhost_port;
     new_conn->outhost_ip = outhost_ip;
+    /*
     if (sendsyn){
       new_conn->state = SYN_SENT;
     } 
     else{
       new_conn->state = SYN_RCVD;
     }
+    */
+    new_conn->state = SYN_RCVD;
     map->conns = new_conn;
   }
   nat->max_port = map->aux_ext;
