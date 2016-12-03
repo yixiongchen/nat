@@ -313,8 +313,6 @@ void sr_handle_arp_reply(struct sr_instance* sr,
           */
           tcp_hdr = (sr_tcp_hdr_t *)(pkt->buf + sizeof(sr_ethernet_hdr_t) + ip_hdr->ip_hl*4);
 
-          /* sr_tcp_psd_hdr_t *tcp_psd_hdr; */
-
           uint8_t flag = tcp_hdr->flag;
           int ack = flag & (1<<4);
           int syn = flag & (1<<1);          
@@ -372,17 +370,26 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* translate tcp destination port number */
             tcp_hdr->port_dst = htons(nat_mapping->aux_int);
             /* recalculate tcp chechsum */
+            /*
             bzero(&(tcp_hdr->tcp_sum), 2);
             uint16_t tcp_cksum = cksum(tcp_hdr, len - 
               sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
             tcp_hdr->tcp_sum = tcp_cksum;
+            */
 
             free(nat_mapping);
           }
 
-          /* create a pseudo tcp packet for calculate tcp check sum */
+          bzero(&(tcp_hdr->tcp_sum), 2);
+
           /*
-          bzero(&(tcp_hdr->tcp_sum), 2);          
+          uint16_t tcp_cksum = cksum(tcp_hdr, len - 
+            sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+          tcp_hdr->tcp_sum = tcp_cksum;
+          */
+
+          /* create a pseudo tcp packet for calculate tcp check sum */
+          sr_tcp_psd_hdr_t *tcp_psd_hdr;
           int tcp_len = (int)ntohs(ip_hdr->ip_len) - (int)ip_hdr->ip_hl * 4;
           printf("tcp_len = %d\n", tcp_len);
           uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + tcp_len);
@@ -400,7 +407,6 @@ void sr_handle_arp_reply(struct sr_instance* sr,
 
           tcp_hdr->tcp_sum = tcp_cksum;
           free(psd_pkt);
-          */
         }
       }
       
@@ -885,8 +891,6 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       uint16_t original_tcp_src_port = tcp_hdr->port_src;
       uint16_t original_tcp_dst_port = tcp_hdr->port_dst;
 
-      /* sr_tcp_psd_hdr_t *tcp_psd_hdr; */
-
       uint8_t flag = tcp_hdr->flag;
       int ack = flag & (1<<4);
       int syn = flag & (1<<1);          
@@ -949,13 +953,14 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
 
+          /*
           uint16_t tcp_cksum = cksum(tcp_hdr, len - 
             sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
           tcp_hdr->tcp_sum = tcp_cksum;
+          */
           
-          free(nat_mapping);
           /* create a pseudo tcp packet for computing tcp check sum */
-          /*
+          sr_tcp_psd_hdr_t *tcp_psd_hdr;
           int tcp_len = (int)ntohs(ip_hdr->ip_len) - (int)ip_hdr->ip_hl * 4;
           uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + tcp_len);
           tcp_psd_hdr = (sr_tcp_psd_hdr_t *)psd_pkt;
@@ -970,14 +975,15 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + tcp_len);
 
           tcp_hdr->tcp_sum = tcp_cksum; 
-          */         
+          
           
           /* send frame to next hop */
           printf("Send packet:\n");
           print_hdrs(sr_pkt, len);
           sr_send_packet(sr, sr_pkt, len, EXT_INTERFACE);
           free(arp_entry);
-          /* free(psd_pkt); */
+          /* free(nat_mapping); */
+          free(psd_pkt);
         }
         /* arp miss */
         else {
@@ -986,7 +992,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         }
         free(sr_pkt);
         free(rtable); 
-        free(nat_mapping);          
+        free(nat_mapping);
       }
 
       /* if the tcp is from external to internal */
@@ -1051,16 +1057,18 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           ip_hdr->ip_sum = ip_cksum;
 
           /* update tcp header */          
-          tcp_hdr->port_dst = htons(nat_mapping->aux_int);
+          tcp_hdr->port_dst = htons(nat_mapping->aux_int); 
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
 
+          /*
           uint16_t tcp_cksum = cksum(tcp_hdr, len - 
             sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
           tcp_hdr->tcp_sum = tcp_cksum;
+          */
 
           /* create a pseudo tcp packet for computing tcp check sum */
-          /*
+          sr_tcp_psd_hdr_t *tcp_psd_hdr;
           int tcp_len = (int)ntohs(ip_hdr->ip_len) - (int)ip_hdr->ip_hl * 4;
           uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + tcp_len);
           tcp_psd_hdr = (sr_tcp_psd_hdr_t *)psd_pkt;
@@ -1075,7 +1083,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + tcp_len);
 
           tcp_hdr->tcp_sum = tcp_cksum;
-          */
+          
           
           /* send frame to next hop */
           printf("Send packet:\n");
