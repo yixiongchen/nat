@@ -504,6 +504,7 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
     return -1;
   }
 
+  free(nat_mapping);
   return 0;
 } /* end sr_handle_ip_pkt */
 
@@ -975,7 +976,6 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           print_hdrs(sr_pkt, len);
           sr_send_packet(sr, sr_pkt, len, EXT_INTERFACE);
           free(arp_entry);
-          free(nat_mapping);
           /* free(psd_pkt); */
         }
         /* arp miss */
@@ -1056,8 +1056,6 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           uint16_t tcp_cksum = cksum(tcp_hdr, len - 
             sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
           tcp_hdr->tcp_sum = tcp_cksum;
-          
-          free(nat_mapping);
 
           /* create a pseudo tcp packet for computing tcp check sum */
           /*
