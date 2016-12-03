@@ -66,41 +66,98 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
     while (map){
       /* handle imcp timeout*/
       struct sr_nat_mapping* next = map->next;
-      if( (map->type == nat_mapping_icmp) && 
-        (difftime(curtime, map->last_updated) >= nat->icmp_query_timeout)){
-        /* free mapping in the middle of linked list*/
-        if(prev){
-          free(map);
-          prev->next = next;
-          map = next;
+      if (map->type == nat_mapping_icmp){
+        if (difftime(curtime, map->last_updated >= nat->icmp_query_timeout){
+          /* free mapping in the middle of linked list*/
+          if(prev){
+            free(map);
+            prev->next = next;
+            map = next;
+          }
+          /* free top of the linked list*/
+          else{
+            free(map);
+            map = next;
+            nat->mappings = map;
+          }
         }
-        /* free top of the linked list*/
         else{
-          free(map);
+          prev = map;
           map = next;
-          nat->mappings = map;
         }
       }
 
-      /* handle tcp timeout
-      else if(){
-        if(prev){
-          next = map->next;
-          prev->next = next;  
-        }
-
-        else{
-          next = map->next;
-          nat->mappings = next; 
-        }
-
-        free_memory(map);
-      }
-      */
-
+      /* handle tcp timeout */
       else{
-        prev = map;
-        map = next;
+        struct sr_nat_connection *connection = map->conns;
+        struct sr_nat_connection *prev_conn = NULL;
+        while (connection){
+          struct sr_nat_connection *next_conn = connection->next;
+          switch (connection->state){
+            case SYN_SENT:
+            case SYN_RCVD:
+            case CLOSING:
+            case LAST_ACK:
+              if (difftime(curtime, connection->last_updated) >= nat->tcp_trans_timeout){
+                if(prev_conn){
+                  free(connection);
+                  prev_conn->next = next_conn;
+                  connection = next_conn;
+                }
+                /* free top of the linked list*/
+                else{
+                  free(connection);
+                  connection = next_conn;
+                  map->conns = connection;
+                }
+              }
+              else{
+                prev_conn = connection;
+                connection = next_conn;
+              }
+              break;
+            case ESTAB:
+            case FIN_WAIT_1:
+            case FIN_WAIT_2:
+            case CLOSE_WAIT:
+              if (difftime(curtime, connection->last_updated) >= nat->tcp_est_timeout){
+                if(prev_conn){
+                  free(connection);
+                  prev_conn->next = next_conn;
+                  connection = next_conn;
+                }
+                /* free top of the linked list*/
+                else{
+                  free(connection);
+                  connection = next_conn;
+                  map->conns = connection;
+                }
+              }
+              else{
+                prev_conn = connection;
+                connection = next_conn;
+              }
+              break;
+            }
+          }
+          if (!map->conns){
+            if(prev){
+              free(map);
+              prev->next = next;
+              map = next;
+            }
+            /* free top of the linked list*/
+            else{
+              free(map);
+              map = next;
+              nat->mappings = map;
+            }
+          }
+          else{
+            prev = map;
+            map = next;
+          }
+        }
       }
     }
 
@@ -118,63 +175,60 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
   pthread_mutex_lock(&(nat->lock));
 
   /* handle lookup here, malloc and assign to copy */
+  time_t now = time(NULL);
   struct sr_nat_mapping *current = nat->mappings;
-  struct sr_nat_mapping *copy; 
+  struct sr_nat_mapping *copy = NULL; 
   printf("begin to find internal ip with external port %d\n",  aux_ext);
   while(current != NULL){
     if(current->type==type && current->aux_ext==aux_ext){
       printf("sucessfully find the internal ip with external port %d\n", aux_ext);
-      copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
-      copy->type = current->type;
-      copy->ip_int =current->ip_int;
-      copy->ip_ext =current->ip_ext;
-      copy->aux_int = current->aux_int;
-      copy->aux_ext =current->aux_ext;
-
-      copy->last_updated = current->last_updated;
-      struct sr_nat_connection *connection;
-      /*copy tcp connections*/
-      if(current ->conns != NULL) {
-        connection = (struct sr_nat_connection*) malloc(sizeof(struct sr_nat_connection));
-        memcpy(connection, current->conns, sizeof(struct sr_nat_connection));
-        struct sr_nat_connection *next_conn = current->conns->next;
-        struct sr_nat_connection *result = connection;
-        /*loop over each tcp connection*/
-        while(next_conn != NULL){
-	  if (ack && !syn & !fin){
-	    switch (next_conn->state) {
-	      case SYN_RCVD:
-		next_conn->state = ESTAB;
-		break;
-	      /* No need to consider TIME_WAIT and CLOSED.
-	      case CLOSING:
-		next_conn->state = TIME_WAIT;
-		break;
-	      case LAST_ACK:
-		next_conn->state = CLOSED;
-		break;*/
-	      default:
-		break;
-	    }
-	  }
-	  else if (!ack && !syn && fin && next_conn->state == ESTAB) {
-	    next_conn->state = CLOSE_WAIT;
-	  }
-	  else if (ack && !syn && fin && next_conn->state == FIN_WAIT_1) {
-	    next_conn->state = FIN_WAIT_2;
-	  }
-          struct sr_nat_connection *nested = (struct sr_nat_connection*) malloc(sizeof(struct sr_nat_connection));
-          memcpy(nested, next_conn, sizeof(struct sr_nat_connection));
-          result-> next = nested;
-          result = result-> next;
-          next_conn = next_conn->next;
-        }  
+      if (!ack && syn && !fin){
+        struct sr_nat_connection* new_conn = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
+        new_conn->next = current->conns;
+        new_conn->outhost_port = src_port;
+        new_conn->outhost_ip = src_ip;
+        new_conn->state = SYN_RCVD;
+        new_conn->last_updated = now;
+        current->conns = new_conn;
       }
-      copy->conns = connection;
-      copy->next = NULL;
+      else{
+        /*loop over each tcp connection*/
+        struct sr_nat_connection *connection = current->conns;
+        while (connection) {
+          if (connection->outhost_ip == src_ip && connection->outhost_port == src_port){
+            if (ack && !syn & !fin){
+              switch (connection->state) {
+                case SYN_RCVD:
+                  connection->state = ESTAB;
+                  connection->last_updated = now;
+                  break;
+                /* No need to consider TIME_WAIT and CLOSED.
+                case CLOSING:
+                  connection->state = TIME_WAIT;
+                  break;
+                case LAST_ACK:
+                  connection->state = CLOSED;
+                  break;*/
+                default:
+                  break;
+              }
+            }
+            else if (!ack && !syn && fin && connection->state == ESTAB) {
+              connection->state = CLOSE_WAIT;
+            }
+            else if (ack && !syn && fin && connection->state == FIN_WAIT_1) {
+              connection->state = FIN_WAIT_2;
+            }
+            break;
+          }
+          connection = connection->next;  
+        }
+      }
+      copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
+      memcpy(copy, current, sizeof(struct sr_nat_mapping));
       break; 
     }
-     current = current->next;
+    current = current->next;
   }
   pthread_mutex_unlock(&(nat->lock));
   return copy;
@@ -190,74 +244,71 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
   /* handle lookup here, malloc and assign to copy. */
   struct sr_nat_mapping *current = nat->mappings;
   struct sr_nat_mapping *copy = NULL;
+  time_t now = time(NULL);
   while(current != NULL){
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
       printf("Found mapping with aux_ext = %d\n", current->aux_ext);
-      copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
-      bzero(copy, sizeof(struct sr_nat_mapping));
-      copy->type = current->type;
-      copy->ip_int=current->ip_int;
-      copy->ip_ext=current->ip_ext;
-      copy->aux_int=current->aux_int;
-      copy->aux_ext=current->aux_ext;
-      copy->last_updated = current->last_updated;
-      struct sr_nat_connection *connection = NULL;
-      /*copy tcp connections*/
-      if(current->conns != NULL) {
-        connection = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
-        memcpy(connection, current->conns, sizeof(struct sr_nat_connection));
-        struct sr_nat_connection *next_conn = current->conns->next;
-        struct sr_nat_connection *result = connection;
+      if (!ack && syn && !fin){
+        struct sr_nat_connection* new_conn = (struct sr_nat_connection*)malloc(sizeof(struct sr_nat_connection));
+        new_conn->next = current->conns;
+        new_conn->outhost_port = dst_port;
+        new_conn->outhost_ip = dst_ip;
+        new_conn->state = SYN_SENT;
+        new_conn->last_updated = now;
+        current->conns = new_conn;
+      }
+      else{
+        struct sr_nat_connection *connection = current->conns;
         /*loop over each tcp connection*/
-        while(next_conn != NULL){
-          struct sr_nat_connection *nested = (struct sr_nat_connection*) malloc(sizeof(struct sr_nat_connection));
-	  /* Check if it's the same connection*/
-	  if (next_conn->outhost_ip == dst_ip && next_conn->outhost_port == dst_port){
-	    if (ack && !syn && !fin) {
-	      switch (next_conn->state) {
-		case SYN_SENT:
-		  next_conn->state = ESTAB;
-		  break;
-		case FIN_WAIT_1:
-		  next_conn->state = CLOSING;
-		  break;
-		/* No need for time_wait.
-		case FIN_WAIT_2:
-		  next_conn->state = TIME_WAIT;
-		  break;
-		*/
-		default:
-		  break;
-	      }
-	    }
-	    else if (!ack && !syn && fin) {
-	      switch (next_conn->state) {
-		case SYN_RCVD:
-		case ESTAB:
-		  next_conn->state = FIN_WAIT_1;
-		  break;
-		case CLOSE_WAIT:
-		  next_conn->state = LAST_ACK;
-		  break;
-		default:
-		  break;
-	      }
-	    }
-	    else if (ack && !syn && fin && next_conn->state == ESTAB) {
-	      next_conn->state = CLOSE_WAIT;
-	    }
-	  }
-          memcpy(nested, next_conn, sizeof(struct sr_nat_connection));
-          result-> next = nested;
-          result = result-> next;
-          next_conn = next_conn->next;
+        while(connection){
+          /* Check if it's the same connection*/
+          if (connection->outhost_ip == dst_ip && connection->outhost_port == dst_port){
+            if (ack && !syn && !fin) {
+              switch (connection->state) {
+                case SYN_SENT:
+                  connection->state = ESTAB;
+                  connection->last_updated = now;
+                  break;
+                case FIN_WAIT_1:
+                  connection->state = CLOSING;
+                  connection->last_updated = now;
+                  break;
+                /* No need for time_wait.
+                case FIN_WAIT_2:
+                  connection->state = TIME_WAIT;
+                  break;
+                */
+                default:
+                  break;
+              }
+            }
+            else if (!ack && !syn && fin) {
+              switch (connection->state) {
+                case SYN_RCVD:
+                case ESTAB:
+                  connection->state = FIN_WAIT_1;
+                  connection->last_updated = now;
+                  break;
+                case CLOSE_WAIT:
+                  connection->state = LAST_ACK;
+                  connection->last_updated = now;
+                  break;
+                default:
+                  break;
+              }
+            }
+            else if (ack && !syn && fin && connection->state == ESTAB) {
+              connection->state = CLOSE_WAIT;
+            }
+            break;
+          }
+          connection = connection->next;
         } 
       }
-      copy->conns = connection;
-      copy->next = NULL;
+      copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
+      memcpy(copy, current, sizeof(struct sr_nat_mapping));
       break; 
     }
-
     current = current->next;
   }
   pthread_mutex_unlock(&(nat->lock));
@@ -269,7 +320,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
    Actually returns a copy to the new mapping, for thread safety.
  */
 struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t outhost_ip, uint16_t outhost_port, int sendsyn) {
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t outhost_ip, uint16_t outhost_port) {
   
   pthread_mutex_lock(&(nat->lock));
 
@@ -297,12 +348,8 @@ struct sr_nat_mapping *sr_nat_insert_mapping(struct sr_nat *nat,
     new_conn->next = NULL;
     new_conn->outhost_port = outhost_port;
     new_conn->outhost_ip = outhost_ip;
-    if (sendsyn){
-      new_conn->state = SYN_SENT;
-    } 
-    else{
-      new_conn->state = SYN_RCVD;
-    }
+    new_conn->state = SYN_SENT;
+    new_conn->last_updated = now;
     map->conns = new_conn;
   }
   nat->max_port = map->aux_ext;
