@@ -259,7 +259,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             if (!nat_mapping) {
 
               nat_mapping = sr_nat_insert_mapping(sr->nat, *ip_src_int, 
-                *aux_src_int, nat_mapping_icmp, 0, 0, 0);
+                *aux_src_int, nat_mapping_icmp, 0, 0);
         	  }
 
       	    ip_hdr->ip_src = nat_mapping->ip_ext;
@@ -310,6 +310,9 @@ void sr_handle_arp_reply(struct sr_instance* sr,
           tcp_hdr = (sr_tcp_hdr_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) + 
             sizeof(struct sr_ip_hdr));
 
+          sr_tcp_psd_hdr_t *tcp_psd_hdr;
+
+
           uint8_t flag = tcp_hdr->flag;
           int ack = flag & (1<<4);
           int syn = flag & (1<<1);          
@@ -329,7 +332,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
               nat_mapping = sr_nat_insert_mapping(sr->nat, ip_src_int, 
-                   aux_src_int, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, 1);
+                   aux_src_int, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst);
             }
 
             /* translate ip source address */
@@ -337,12 +340,13 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* translate tcp source port number */
             tcp_hdr->port_src = nat_mapping->aux_ext;
             /* recalculate tcp chechsum */
+            /*
             bzero(&(tcp_hdr->tcp_sum), 2);
             uint16_t tcp_cksum = cksum(tcp_hdr, len - 
               sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
             tcp_hdr->tcp_sum = tcp_cksum;
+            */
             free(nat_mapping);
-
           }
 
           /* if the tcp is from external to internal */
@@ -366,12 +370,34 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* translate tcp destination port number */
             tcp_hdr->port_src = nat_mapping->aux_int;
             /* recalculate tcp chechsum */
+            /*
             bzero(&(tcp_hdr->tcp_sum), 2);
             uint16_t tcp_cksum = cksum(tcp_hdr, len - 
               sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
             tcp_hdr->tcp_sum = tcp_cksum;
+            */
             free(nat_mapping);
           }
+
+          bzero(&(tcp_hdr->tcp_sum), 2);
+          /* create a pseudo tcp packet for calculate tcp check sum */
+          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          tcp_psd_hdr = (sr_tcp_psd_hdr_t *)psd_pkt;
+          tcp_psd_hdr->ip_src = ip_hdr->ip_src;
+          tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
+          bzero(&(tcp_psd_hdr->reserved), 1);
+          tcp_psd_hdr->protocol = ip_hdr->ip_p;
+          tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
+
+          memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+
+          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+
+          tcp_hdr->tcp_sum = tcp_cksum;
+          free(psd_pkt);
         }
       }
       
@@ -718,7 +744,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	  /* Create new mapping if existing mapping not found.*/
       	  if (!nat_mapping) {
       	    nat_mapping = sr_nat_insert_mapping(sr->nat, original_ip_src, 
-      					*original_icmp_id, nat_mapping_icmp, 0, 0, 0);
+      					*original_icmp_id, nat_mapping_icmp, 0, 0);
       	  }
       	  
       	  struct sr_if* o_iface = sr_get_interface(sr, EXT_INTERFACE);
@@ -856,6 +882,8 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       uint16_t original_tcp_src_port = tcp_hdr->port_src;
       uint16_t original_tcp_dst_port = tcp_hdr->port_dst;
 
+      sr_tcp_psd_hdr_t *tcp_psd_hdr;
+
       uint8_t flag = tcp_hdr->flag;
       int ack = flag & (1<<4);
       int syn = flag & (1<<1);          
@@ -882,7 +910,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         /* Create new mapping if existing mapping not found.*/
         if (!nat_mapping) {
           nat_mapping = sr_nat_insert_mapping(sr->nat, original_ip_src, 
-            original_tcp_src_port, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, 1);
+            original_tcp_src_port, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst);
         }
         
         struct sr_if* o_iface = sr_get_interface(sr, EXT_INTERFACE);
@@ -915,8 +943,22 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           tcp_hdr->port_src = nat_mapping->aux_ext;
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
-          uint16_t tcp_cksum = cksum(tcp_hdr, len - 
-            sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+          /* create a pseudo tcp packet for computing tcp check sum */
+          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          tcp_psd_hdr = (sr_tcp_psd_hdr_t *)psd_pkt;
+          tcp_psd_hdr->ip_src = ip_hdr->ip_src;
+          tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
+          bzero(&(tcp_psd_hdr->reserved), 1);
+          tcp_psd_hdr->protocol = ip_hdr->ip_p;
+          tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
+
+          memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+
+          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+
           tcp_hdr->tcp_sum = tcp_cksum;          
           
           /* send frame to next hop */
@@ -925,6 +967,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           sr_send_packet(sr, sr_pkt, len, EXT_INTERFACE);
           free(arp_entry);
           free(nat_mapping);
+          free(psd_pkt);
         }
         /* arp miss */
         else {
@@ -990,15 +1033,30 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           tcp_hdr->port_dst = nat_mapping->aux_int;
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
-          uint16_t tcp_cksum = cksum(tcp_hdr, len - 
-            sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
-          tcp_hdr->tcp_sum = tcp_cksum;          
+          /* create a pseudo tcp packet for computing tcp check sum */
+          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          tcp_psd_hdr = (sr_tcp_psd_hdr_t *)psd_pkt;
+          tcp_psd_hdr->ip_src = ip_hdr->ip_src;
+          tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
+          bzero(&(tcp_psd_hdr->reserved), 1);
+          tcp_psd_hdr->protocol = ip_hdr->ip_p;
+          tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
 
+          memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+
+          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + 
+            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+
+          tcp_hdr->tcp_sum = tcp_cksum;
+          
           /* send frame to next hop */
           printf("Send packet:\n");
           print_hdrs(sr_pkt, len);
           sr_send_packet(sr, sr_pkt, len, INT_INTERFACE);
           free(arp_entry);
+          free(psd_pkt);
         }  
         /* arp miss */
         else {
