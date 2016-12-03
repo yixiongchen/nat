@@ -34,9 +34,6 @@ struct sr_nat_connection {
   /* add TCP connection state data members here */
   time_t initialized; /*time initialize a tcp session*/
   connection_state state; /* it is closed or open*/
-  int fin;
-  int syn;
-  int ack;
   uint32_t outhost_ip;
   uint32_t outhost_port;
   struct sr_nat_connection *next;
