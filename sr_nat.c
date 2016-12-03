@@ -249,6 +249,7 @@ struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
   time_t now = time(NULL);
   while(current != NULL){
     printf("current mapping: ip_int = %d, ip_ext = %d, aux_int = %d, aux_ext = %d\n", current->ip_int, current->ip_ext, current->aux_int, current->aux_ext);
+    printf("type match: %d; port match: %d; ip match: %d\n", current->type==type, current->aux_int==aux_int, current->ip_int==ip_int);
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
       printf("Found mapping with aux_ext = %d\n", current->aux_ext);
       if (is_first_time){
