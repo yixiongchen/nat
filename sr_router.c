@@ -252,7 +252,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* printf("src_ip %u\n", *ip_src_int ); */
             /* printf("port_int %d\n",*aux_src_int); */
               nat_mapping = sr_nat_lookup_internal(sr->nat, *ip_src_int, 
-                *aux_src_int, nat_mapping_icmp, 0, 0, 0, 0, 0);
+                *aux_src_int, nat_mapping_icmp, 0, 0, 0, 0, 0, 0);
 
             /* printf("pass look up.\n"); */
             /* Create new mapping if existing mapping not found.*/
@@ -281,7 +281,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	    aux_ext = (uint16_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) 
       	      + sizeof(struct sr_ip_hdr) + sizeof(struct sr_icmp_hdr));
       	    struct sr_nat_mapping *nat_mapping;
-      	    nat_mapping = sr_nat_lookup_external(sr->nat, *aux_ext, nat_mapping_icmp, 0, 0, 0, 0, 0);
+      	    nat_mapping = sr_nat_lookup_external(sr->nat, *aux_ext, nat_mapping_icmp, 0, 0, 0, 0, 0, 0);
 
       	    /* If no mapping, drop the packet.*/
       	    if (!nat_mapping) {
@@ -327,7 +327,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* find nat mapping */
             struct sr_nat_mapping *nat_mapping;
             nat_mapping = sr_nat_lookup_internal(sr->nat, ip_src_int, 
-              aux_src_int, nat_mapping_icmp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin);
+              aux_src_int, nat_mapping_icmp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin, 0);
 
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
@@ -357,7 +357,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* find nat mapping */            
             struct sr_nat_mapping *nat_mapping;
             nat_mapping = sr_nat_lookup_external(sr->nat, aux_ext, nat_mapping_tcp, 
-              ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin);
+              ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 0);
             
             /* If no mapping, drop the packet.*/
             if (!nat_mapping) {
@@ -449,7 +449,7 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
       sizeof(struct sr_ip_hdr));
       /* If the packet comes from outside. */
       if (ip_hdr->ip_dst == sr->nat->ip_ext){
-        nat_mapping = sr_nat_lookup_external(sr->nat, icmp_t8_hdr->icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0);
+        nat_mapping = sr_nat_lookup_external(sr->nat, icmp_t8_hdr->icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0, 0);
       }
     }
 
@@ -466,12 +466,7 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
       /* If the packet comes from outside.*/
       if (ip_hdr->ip_dst == sr->nat->ip_ext){
         nat_mapping = sr_nat_lookup_external(sr->nat, tcp_hdr->port_dst, nat_mapping_tcp, 
-          ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin);
-        if (!nat_mapping){
-          sleep(6);
-          nat_mapping = sr_nat_lookup_external(sr->nat, tcp_hdr->port_dst, nat_mapping_tcp, 
-            ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin);
-        }
+          ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 0);
       }
     }
   }
@@ -739,7 +734,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	  /* Look for nat mapping for corresponding src_ip and src_aux. */
       	  struct sr_nat_mapping *nat_mapping;
       	  nat_mapping = sr_nat_lookup_internal(sr->nat, original_ip_src, 
-            *original_icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0);
+            *original_icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0, 0);
 	  
       	  /* Create new mapping if existing mapping not found.*/
       	  if (!nat_mapping) {
@@ -803,7 +798,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       else if (original_icmp_hdr->icmp_type == 0) {
       	/* Look for nat mapping for corresponding dst_ip and dst_aux. */
       	struct sr_nat_mapping *nat_mapping;
-      	nat_mapping = sr_nat_lookup_external(sr->nat, *original_icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0);
+      	nat_mapping = sr_nat_lookup_external(sr->nat, *original_icmp_id, nat_mapping_icmp, 0, 0, 0, 0, 0, 0);
       	
       	if (!nat_mapping) {
       	  fprintf(stderr , "** Error: No mapping found when forwarding icmp reply.");
@@ -905,7 +900,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         /* Look for nat mapping for corresponding src_ip and src_aux. */
         struct sr_nat_mapping *nat_mapping;
         nat_mapping = sr_nat_lookup_internal(sr->nat, original_ip_src, 
-          original_tcp_src_port, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin);
+          original_tcp_src_port, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin, 1);
   
         /* Create new mapping if existing mapping not found.*/
         if (!nat_mapping) {
@@ -985,12 +980,17 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         /* Look for nat mapping for corresponding dst_ip and dst_aux. */
         struct sr_nat_mapping *nat_mapping;
         nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, 
-          nat_mapping_icmp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin);
+          nat_mapping_icmp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
         
         /* if no mapping, drop the packet */
         if (!nat_mapping) {
-          fprintf(stderr , "** Error: No mapping found when forwarding tcp packet.");
-          return;
+          sleep(6);
+          nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, 
+            nat_mapping_icmp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
+          if (!nat_mapping){
+            fprintf(stderr , "** Error: No nat mapping found for tcp comes from outside. \n");
+            return;
+          }
         }
 
         /* lookup the longest prefix match */

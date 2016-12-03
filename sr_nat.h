@@ -77,12 +77,12 @@ void *sr_nat_timeout(void *nat_ptr);  /* Periodic Timout */
 /* Get the mapping associated with given external port.
    You must free the returned structure if it is not NULL. */
 struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
-    uint16_t aux_ext, sr_nat_mapping_type type, uint32_t src_ip, uint16_t src_port, int ack, int syn, int fin);
+    uint16_t aux_ext, sr_nat_mapping_type type, uint32_t src_ip, uint16_t src_port, int ack, int syn, int fin, int is_first_time);
 
 /* Get the mapping associated with given internal (ip, port) pair.
    You must free the returned structure if it is not NULL. */
 struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
-  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t dst_ip, uint16_t dst_port, int ack, int syn, int fin);
+  uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t dst_ip, uint16_t dst_port, int ack, int syn, int fin, int is_first_time);
 
 /* Insert a new mapping into the nat's mapping table.
    You must free the returned structure if it is not NULL. */
