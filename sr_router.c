@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "sr_if.h"
 #include "sr_rt.h"
@@ -474,8 +475,16 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
 
       /* If the packet comes from outside.*/
       if (ip_hdr->ip_dst == sr->nat->ip_ext){
+        if (ntohs(tcp_hdr->port_dst) < 1024){
+          sr_icmp_dest_unreachable(sr, packet, len, interface, 3, 3);
+        }
         nat_mapping = sr_nat_lookup_external(sr->nat, ntohs(tcp_hdr->port_dst), nat_mapping_tcp, 
           ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 0);
+      }
+
+      /* If the packet comes from inside. */
+      if (ip_hdr->ip_dst == sr_get_interface(sr, INT_INTERFACE)->ip){
+        sr_icmp_dest_unreachable(sr, packet, len, interface, 3, 3);
       }
     }
   }
@@ -487,7 +496,12 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
 
   for (my_iface = sr->if_list; my_iface != NULL; my_iface = my_iface->next){
     if ((ip_hdr->ip_dst == my_iface->ip) && (!nat_mapping)) {
-      sr_handle_pkt_for_me(sr, packet, len, interface);
+      if (sr->nat_on && ip_hdr->ip_p == ip_protocol_tcp){
+        sr_forward_ip_pkt(sr, packet, len, interface);
+      }
+      else{
+        sr_handle_pkt_for_me(sr, packet, len, interface);
+      }
       return 0;
     }
   }
@@ -653,7 +667,13 @@ void sr_icmp_dest_unreachable(struct sr_instance* sr,
   bzero(&(icmp_t3_hdr->next_mtu), 2);
   memcpy(icmp_t3_hdr->data, packet + sizeof(struct sr_ethernet_hdr), ICMP_DATA_SIZE);
   /* uint16_t icmp_cksum = cksum(icmp_t3_hdr, sizeof(struct sr_icmp_t3_hdr));*/
-  uint16_t icmp_cksum = cksum(icmp_t3_hdr, (int)ntohs(ip_hdr->ip_len)-((int)ip_hdr->ip_hl)*4);
+  uint16_t icmp_cksum;
+  if (sr->nat_on){
+    icmp_cksum = cksum(icmp_t3_hdr, (int)ntohs(ip_hdr->ip_len)-((int)ip_hdr->ip_hl)*4);
+  }
+  else{
+    icmp_cksum = cksum(icmp_t3_hdr, sizeof(struct sr_icmp_t3_hdr));
+  }
   icmp_t3_hdr->icmp_sum = icmp_cksum;
 
   /* Drop packet if ip_src is me */
@@ -1023,18 +1043,16 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
 
         /* if no mapping, drop the packet */
         if (!nat_mapping) {
-	  printf("Sleep for 6 seconds\n");
           sleep(6);
           nat_mapping = sr_nat_lookup_external(sr->nat, ntohs(original_tcp_dst_port), 
-            nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
+          nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
           if (!nat_mapping){
-	    printf("original tcp dst port: %d\n", ntohs(original_tcp_dst_port));
             if (ntohs(original_tcp_dst_port) >= 1024){
               sr_icmp_dest_unreachable(sr, packet, len, interface, 3, 3);
               return;
             }
             else{
-              fprintf(stderr , "** Error: No nat mapping found for tcp comes from outside. \n");
+              fprintf(stderr , "** Error: packet from port less than 1024. \n");
               return;
             } 
           }
