@@ -941,6 +941,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           ip_hdr->ip_sum = ip_cksum;
 
           /* update tcp header */          
+          printf("UPDATE TCP PORT TO %d...................\n", nat_mapping->aux_ext);
           tcp_hdr->port_src = htons(nat_mapping->aux_ext);
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
