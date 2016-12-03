@@ -70,14 +70,15 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
         (difftime(curtime, map->last_updated) >= nat->icmp_query_timeout)){
         /* free mapping in the middle of linked list*/
         if(prev){
-          free_memory(map);
+          free(map);
           prev->next = next;
           map = next;
         }
         /* free top of the linked list*/
         else{
-          free_memory(map);
+          free(map);
           map = next;
+          nat->mappings = map;
         }
       }
 
@@ -185,16 +186,13 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
 struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
   uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t dst_ip, uint16_t dst_port, int ack, int syn, int fin) {
   pthread_mutex_lock(&(nat->lock));
-  printf("begin %d\n",aux_int);
+  printf("Begin to look for external port using internal.\n");
   /* handle lookup here, malloc and assign to copy. */
   struct sr_nat_mapping *current = nat->mappings;
-  printf("one. \n");
   struct sr_nat_mapping *copy = NULL;
-  printf("two. \n");
   while(current != NULL){
-     printf("nat_mapping is not null. \n");
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
-      printf("already exist in. \n");
+      printf("Found mapping with aux_ext = %d\n", current->aux_ext);
       copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
       bzero(copy, sizeof(struct sr_nat_mapping));
       copy->type = current->type;
