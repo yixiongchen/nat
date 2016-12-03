@@ -325,7 +325,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* get source ip and port number */
             uint32_t ip_src_int = ip_hdr->ip_src;
             uint16_t aux_src_int = tcp_hdr->port_src;
-
+ 
             /* find nat mapping */
             struct sr_nat_mapping *nat_mapping;
             nat_mapping = sr_nat_lookup_internal(sr->nat, ip_src_int, 
@@ -383,20 +383,20 @@ void sr_handle_arp_reply(struct sr_instance* sr,
 
           bzero(&(tcp_hdr->tcp_sum), 2);
           /* create a pseudo tcp packet for calculate tcp check sum */
-          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + 
-            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          int tcp_len = (int)ntohs(ip_hdr->ip_len) - (int)ip_hdr->ip_hl * 4;
+          printf("tcp_len = %d\n", tcp_len);
+          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + tcp_len);
           tcp_psd_hdr = (sr_tcp_psd_hdr_t *)psd_pkt;
           tcp_psd_hdr->ip_src = ip_hdr->ip_src;
           tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
           bzero(&(tcp_psd_hdr->reserved), 1);
           tcp_psd_hdr->protocol = ip_protocol_tcp;
-          tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
+          tcp_psd_hdr->tcp_len = tcp_len;
 
           memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
             (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
 
-          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + 
-            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + tcp_len);
 
           tcp_hdr->tcp_sum = tcp_cksum;
           free(psd_pkt);
@@ -945,20 +945,18 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
           /* create a pseudo tcp packet for computing tcp check sum */
-          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + 
-            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          int tcp_len = (int)ntohs(ip_hdr->ip_len) - (int)ip_hdr->ip_hl * 4;
+          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + tcp_len);
           tcp_psd_hdr = (sr_tcp_psd_hdr_t *)psd_pkt;
           tcp_psd_hdr->ip_src = ip_hdr->ip_src;
           tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
           bzero(&(tcp_psd_hdr->reserved), 1);
           tcp_psd_hdr->protocol = ip_protocol_tcp;
-          tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
+          tcp_psd_hdr->tcp_len = tcp_len;
 
-          memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
-            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, tcp_len);
 
-          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + 
-            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + tcp_len);
 
           tcp_hdr->tcp_sum = tcp_cksum;          
           
@@ -1040,20 +1038,18 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
           /* create a pseudo tcp packet for computing tcp check sum */
-          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + 
-            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          int tcp_len = (int)ntohs(ip_hdr->ip_len) - (int)ip_hdr->ip_hl * 4;
+          uint8_t *psd_pkt = (uint8_t *)malloc(sizeof(sr_tcp_psd_hdr_t) + tcp_len);
           tcp_psd_hdr = (sr_tcp_psd_hdr_t *)psd_pkt;
           tcp_psd_hdr->ip_src = ip_hdr->ip_src;
           tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
           bzero(&(tcp_psd_hdr->reserved), 1);
           tcp_psd_hdr->protocol = ip_protocol_tcp;
-          tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
+          tcp_psd_hdr->tcp_len = tcp_len;
 
-          memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
-            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, tcp_len);
 
-          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + 
-            (int)ntohs(ip_hdr->ip_len) - ((int)ip_hdr->ip_hl)*4);
+          uint16_t tcp_cksum = cksum(psd_pkt, sizeof(sr_tcp_psd_hdr_t) + tcp_len);
 
           tcp_hdr->tcp_sum = tcp_cksum;
           
