@@ -993,8 +993,13 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           nat_mapping = sr_nat_lookup_external(sr->nat, ntohs(original_tcp_dst_port), 
             nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
           if (!nat_mapping){
-            fprintf(stderr , "** Error: No nat mapping found for tcp comes from outside. \n");
-            return;
+            if (ntohs(original_tcp_dst_port) >= 1024){
+              sr_icmp_dest_unreachable(sr, packet, len, interface, 3, 3);
+            }
+            else{
+              fprintf(stderr , "** Error: No nat mapping found for tcp comes from outside. \n");
+              return;
+            } 
           }
         }
 
