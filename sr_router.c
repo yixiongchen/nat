@@ -1029,6 +1029,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         /* make a copy of the packet */
         uint8_t *sr_pkt = (uint8_t *)malloc(len);
         memcpy(sr_pkt, packet, len);
+        tcp_hdr = (sr_tcp_hdr_t *)(sr_pkt + sizeof(sr_ethernet_hdr_t) + ip_hdr->ip_hl*4);
 
         /* check arp cache for next hop mac */
         struct sr_arpentry *arp_entry; 
