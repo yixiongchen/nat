@@ -986,13 +986,13 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         /* Look for nat mapping for corresponding dst_ip and dst_aux. */
         struct sr_nat_mapping *nat_mapping;
         nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, 
-          nat_mapping_icmp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
+          nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
         
         /* if no mapping, drop the packet */
         if (!nat_mapping) {
           sleep(6);
           nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, 
-            nat_mapping_icmp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
+            nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
           if (!nat_mapping){
             fprintf(stderr , "** Error: No nat mapping found for tcp comes from outside. \n");
             return;
