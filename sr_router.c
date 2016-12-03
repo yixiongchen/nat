@@ -1064,15 +1064,22 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         if (arp_entry) {
           /* update ethernet header */
           ethernet_hdr = (sr_ethernet_hdr_t *)sr_pkt;
-          memcpy(ethernet_hdr->ether_dhost, arp_entry->mac, ETHER_ADDR_LEN); 
-          memcpy(ethernet_hdr->ether_shost, o_iface->addr, ETHER_ADDR_LEN); 
+          memcpy(ethernet_hdr->ether_dhost, arp_entry->mac, ETHER_ADDR_LEN);
+          printf("14.1\n");
+          memcpy(ethernet_hdr->ether_shost, o_iface->addr, ETHER_ADDR_LEN);
+          printf("14.2\n");
         
           /* update ip header */
           ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
+          printf("14.3\n");
           ip_hdr->ip_ttl--;
+          printf("14.4\n");
           ip_hdr->ip_dst = nat_mapping->ip_int;
-          bzero(&(ip_hdr->ip_sum), 2);  
+          printf("14.5\n");
+          bzero(&(ip_hdr->ip_sum), 2);
+          printf("14.6\n");
           uint16_t ip_cksum = cksum(ip_hdr, 4*(ip_hdr->ip_hl));
+          printf("14.7\n");
           ip_hdr->ip_sum = ip_cksum;
 
           printf("15\n");
