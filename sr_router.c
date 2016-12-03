@@ -1081,7 +1081,7 @@ struct sr_rt *sr_longest_prefix_match(struct sr_instance* sr, uint32_t ip)
   struct sr_rt *rt;
   for (rt = sr->routing_table; rt != NULL; rt = rt->next) {
     if (((ip & rt->mask.s_addr) == rt->dest.s_addr) && 
-        (rt->mask.s_addr > rtable->mask.s_addr)) {
+        (rt->mask.s_addr >= rtable->mask.s_addr)) {
       memcpy(rtable, rt, sizeof(struct sr_rt));      
     }
   }
