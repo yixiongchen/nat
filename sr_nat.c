@@ -180,6 +180,7 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
   printf("begin to find internal ip with external port %d\n",  aux_ext);
   while(current != NULL){
     printf("current mapping: ip_int = %d, ip_ext = %d, aux_int = %d, aux_ext = %d\n", current->ip_int, current->ip_ext, current->aux_int, current->aux_ext);
+    printf("type match: %d; port match: %d\n", current->type==type, current->aux_ext==aux_ext);
     if(current->type==type && current->aux_ext==aux_ext){
       printf("sucessfully find the internal ip with external port %d\n", aux_ext);
       if (is_first_time){
