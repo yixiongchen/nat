@@ -271,8 +271,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
 
       	    icmp_hdr_new->icmp_id = nat_mapping->aux_ext;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
-      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - sizeof(struct sr_ethernet_hdr) - 
-              sizeof(struct sr_ip_hdr));
+            uint16_t icmp_cksum = cksum(icmp_hdr_new, (int)ntohs(ip_hdr->ip_len)-((int)ip_hdr->ip_hl)*4);
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
             free(nat_mapping);
         	}
@@ -298,8 +297,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
       	      sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
       	    icmp_hdr_new->icmp_id = nat_mapping->aux_int;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
-      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - sizeof(struct sr_ethernet_hdr) - 
-              sizeof(struct sr_ip_hdr));
+      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, (int)ntohs(ip_hdr->ip_len)-((int)ip_hdr->ip_hl)*4);
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
             free(nat_mapping);
           }
@@ -530,8 +528,7 @@ int sr_handle_pkt_for_me(struct sr_instance* sr,
       icmp_hdr->icmp_type = 0;  /* set icmp type to echo reply */
       /* recalculate checksum */
       bzero(&(icmp_hdr->icmp_sum), 2);
-      icmp_cksum = cksum(icmp_hdr, len - sizeof(struct sr_ethernet_hdr) - 
-              sizeof(struct sr_ip_hdr));
+      icmp_cksum = cksum(icmp_hdr, (int)ntohs(ip_hdr->ip_len)-((int)ip_hdr->ip_hl)*4);
       icmp_hdr->icmp_sum = icmp_cksum;
 
       /*update ip header */
@@ -612,6 +609,9 @@ void sr_icmp_dest_unreachable(struct sr_instance* sr,
   uint8_t *sr_pkt = (uint8_t *)malloc(pkt_len);
   memcpy(sr_pkt, packet, sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
 
+  /* update ip header */ 
+  ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
+
   /* update icmp header */
   icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr) + 
     sizeof(struct sr_ip_hdr));
@@ -623,9 +623,6 @@ void sr_icmp_dest_unreachable(struct sr_instance* sr,
   memcpy(icmp_t3_hdr->data, packet + sizeof(struct sr_ethernet_hdr), ICMP_DATA_SIZE);
   uint16_t icmp_cksum = cksum(icmp_t3_hdr, sizeof(struct sr_icmp_t3_hdr));
   icmp_t3_hdr->icmp_sum = icmp_cksum;
-
-  /* update ip header */ 
-  ip_hdr = (sr_ip_hdr_t *)(sr_pkt + sizeof(struct sr_ethernet_hdr));
 
   /* Drop packet if ip_src is me */
   struct sr_if *my_iface;
@@ -756,8 +753,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	      sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
       	    icmp_hdr_new->icmp_id = nat_mapping->aux_ext;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
-      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - sizeof(struct sr_ethernet_hdr) - 
-              sizeof(struct sr_ip_hdr));
+      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, (int)ntohs(ip_hdr->ip_len)-((int)ip_hdr->ip_hl)*4);
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
 
       	    /* send frame to next hop */
@@ -830,8 +826,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
       	      sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_ip_hdr));
       	    icmp_hdr_new->icmp_id = nat_mapping->aux_int;
       	    bzero(&(icmp_hdr_new->icmp_sum), 2);
-      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, len - sizeof(struct sr_ethernet_hdr) - 
-              sizeof(struct sr_ip_hdr));
+      	    uint16_t icmp_cksum = cksum(icmp_hdr_new, (int)ntohs(ip_hdr->ip_len)-((int)ip_hdr->ip_hl)*4);
       	    icmp_hdr_new->icmp_sum = icmp_cksum;
 
       	    /* send frame to next hop */
@@ -1087,7 +1082,7 @@ struct sr_rt *sr_longest_prefix_match(struct sr_instance* sr, uint32_t ip)
   struct sr_rt *rt;
   for (rt = sr->routing_table; rt != NULL; rt = rt->next) {
     if (((ip & rt->mask.s_addr) == rt->dest.s_addr) && 
-        (rt->mask.s_addr > rtable->mask.s_addr)) {
+        (rt->mask.s_addr >= rtable->mask.s_addr)) {
       memcpy(rtable, rt, sizeof(struct sr_rt));      
     }
   }

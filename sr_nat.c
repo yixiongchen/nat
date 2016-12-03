@@ -47,6 +47,7 @@ int sr_nat_destroy(struct sr_nat *nat) {  /* Destroys the nat (free memory) */
     free_memory(current);
     current = next;
   }
+  free(nat);
   pthread_kill(nat->thread, SIGKILL);
   return pthread_mutex_destroy(&(nat->lock)) && pthread_mutexattr_destroy(&(nat->attr));
 
@@ -60,25 +61,25 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
     pthread_mutex_lock(&(nat->lock));
     time_t curtime = time(NULL);
     /* handle periodic tasks here */
-    struct sr_nat_mapping* map; 
+    struct sr_nat_mapping* map = nat->mappings; 
     struct sr_nat_mapping* prev = NULL;
-    struct sr_nat_mapping* next = NULL;
-    for(map = nat->mappings; map != NULL; map = map->next){
+    while (map){
       /* handle imcp timeout*/
+      struct sr_nat_mapping* next = map->next;
       if( (map->type == nat_mapping_icmp) && 
         (difftime(curtime, map->last_updated) >= nat->icmp_query_timeout)){
         /* free mapping in the middle of linked list*/
         if(prev){
-          next = map->next;
-          prev->next = next;  
+          free(map);
+          prev->next = next;
+          map = next;
         }
         /* free top of the linked list*/
         else{
-          next = map->next;
-          nat->mappings = next; 
+          free(map);
+          map = next;
+          nat->mappings = map;
         }
-        free_memory(map);
-        break;
       }
 
       /* handle tcp timeout
@@ -98,11 +99,9 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
       */
 
       else{
-        pthread_mutex_unlock(&(nat->lock));
-        return NULL;
-
+        prev = map;
+        map = next;
       }
-      prev = map;
     }
 
     pthread_mutex_unlock(&(nat->lock));
@@ -187,16 +186,13 @@ struct sr_nat_mapping *sr_nat_lookup_external(struct sr_nat *nat,
 struct sr_nat_mapping *sr_nat_lookup_internal(struct sr_nat *nat,
   uint32_t ip_int, uint16_t aux_int, sr_nat_mapping_type type, uint32_t dst_ip, uint16_t dst_port, int ack, int syn, int fin) {
   pthread_mutex_lock(&(nat->lock));
-  printf("begin %d\n",aux_int);
+  printf("Begin to look for external port using internal.\n");
   /* handle lookup here, malloc and assign to copy. */
   struct sr_nat_mapping *current = nat->mappings;
-  printf("one. \n");
   struct sr_nat_mapping *copy = NULL;
-  printf("two. \n");
   while(current != NULL){
-     printf("nat_mapping is not null. \n");
     if(current->type==type && current->aux_int==aux_int && current->ip_int==ip_int){
-      printf("already exist in. \n");
+      printf("Found mapping with aux_ext = %d\n", current->aux_ext);
       copy = (struct sr_nat_mapping*)malloc(sizeof(struct sr_nat_mapping));
       bzero(copy, sizeof(struct sr_nat_mapping));
       copy->type = current->type;
