@@ -67,7 +67,7 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
       /* handle imcp timeout*/
       struct sr_nat_mapping* next = map->next;
       if (map->type == nat_mapping_icmp){
-        if (difftime(curtime, map->last_updated >= nat->icmp_query_timeout){
+        if (difftime(curtime, map->last_updated) >= nat->icmp_query_timeout){
           /* free mapping in the middle of linked list*/
           if(prev){
             free(map);
@@ -138,33 +138,32 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
                 connection = next_conn;
               }
               break;
-            }
           }
-          if (!map->conns){
-            if(prev){
-              free(map);
-              prev->next = next;
-              map = next;
-            }
-            /* free top of the linked list*/
-            else{
-              free(map);
-              map = next;
-              nat->mappings = map;
-            }
-          }
-          else{
-            prev = map;
+        }
+        if (!map->conns){
+          if(prev){
+            free(map);
+            prev->next = next;
             map = next;
           }
+          /* free top of the linked list*/
+          else{
+            free(map);
+            map = next;
+            nat->mappings = map;
+          }
+        }
+        else{
+          prev = map;
+          map = next;
         }
       }
     }
-
-    pthread_mutex_unlock(&(nat->lock));
   }
+  pthread_mutex_unlock(&(nat->lock));
   return NULL;
 }
+  
 
 
 /* Get the mapping associated with given external port.
