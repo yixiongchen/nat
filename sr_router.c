@@ -307,11 +307,13 @@ void sr_handle_arp_reply(struct sr_instance* sr,
         if (ip_hdr->ip_p == ip_protocol_tcp) {
 
           sr_tcp_hdr_t *tcp_hdr;
+          /*
           tcp_hdr = (sr_tcp_hdr_t *)(pkt->buf + sizeof(struct sr_ethernet_hdr) + 
             sizeof(struct sr_ip_hdr));
+          */
+          tcp_hdr = (sr_tcp_hdr_t *)(pkt->buf + sizeof(sr_ethernet_hdr_t) + ip_hdr->ip_hl*4);
 
           sr_tcp_psd_hdr_t *tcp_psd_hdr;
-
 
           uint8_t flag = tcp_hdr->flag;
           int ack = flag & (1<<4);
@@ -387,7 +389,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
           tcp_psd_hdr->ip_src = ip_hdr->ip_src;
           tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
           bzero(&(tcp_psd_hdr->reserved), 1);
-          tcp_psd_hdr->protocol = ip_hdr->ip_p;
+          tcp_psd_hdr->protocol = ip_protocol_tcp;
           tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
 
           memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
@@ -877,8 +879,12 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
     else if (ip_hdr->ip_p == ip_protocol_tcp) {
 
       sr_tcp_hdr_t *tcp_hdr;
+      /*
       tcp_hdr = (sr_tcp_hdr_t *)(packet + sizeof(struct sr_ethernet_hdr) + 
         sizeof(struct sr_ip_hdr));
+      */
+      tcp_hdr = (sr_tcp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + ip_hdr->ip_hl*4);
+
       uint16_t original_tcp_src_port = tcp_hdr->port_src;
       uint16_t original_tcp_dst_port = tcp_hdr->port_dst;
 
@@ -950,7 +956,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           tcp_psd_hdr->ip_src = ip_hdr->ip_src;
           tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
           bzero(&(tcp_psd_hdr->reserved), 1);
-          tcp_psd_hdr->protocol = ip_hdr->ip_p;
+          tcp_psd_hdr->protocol = ip_protocol_tcp;
           tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
 
           memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
@@ -1040,7 +1046,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           tcp_psd_hdr->ip_src = ip_hdr->ip_src;
           tcp_psd_hdr->ip_dst = ip_hdr->ip_dst;
           bzero(&(tcp_psd_hdr->reserved), 1);
-          tcp_psd_hdr->protocol = ip_hdr->ip_p;
+          tcp_psd_hdr->protocol = ip_protocol_tcp;
           tcp_psd_hdr->tcp_len = ip_hdr->ip_len - ((uint16_t)ip_hdr->ip_hl)*4;
 
           memcpy(psd_pkt + sizeof(sr_tcp_psd_hdr_t), tcp_hdr, 
