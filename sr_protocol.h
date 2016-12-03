@@ -169,6 +169,15 @@ struct sr_tcp_hdr
   } __attribute__ ((packed)) ;
 typedef struct sr_tcp_hdr sr_tcp_hdr_t;
 
+struct sr_tcp_psd_hdr {
+  uint32_t ip_src;
+  uint32_t ip_dst;
+  uint8_t reserved;
+  uint8_t protocol;
+  uint16_t tcp_len;
+} __attribute__ ((packed)) ;
+typedef struct sr_tcp_psd_hdr sr_tcp_psd_hdr_t;
+
 /* 
  *  Ethernet packet header prototype.  Too many O/S's define this differently.
  *  Easy enough to solve that and define it here.
