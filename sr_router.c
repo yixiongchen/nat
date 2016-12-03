@@ -340,7 +340,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* translate ip source address */
             ip_hdr->ip_src = nat_mapping->ip_ext;            
             /* translate tcp source port number */
-            tcp_hdr->port_src = nat_mapping->aux_ext;
+            tcp_hdr->port_src = htons(nat_mapping->aux_ext);
             /* recalculate tcp chechsum */
             /*
             bzero(&(tcp_hdr->tcp_sum), 2);
@@ -354,7 +354,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
           /* if the tcp is from external to internal */
           if (strcmp(pkt->iface, INT_INTERFACE) == 0) {
             /* get destination port number */
-            uint16_t aux_ext = tcp_hdr->port_dst;
+            uint16_t aux_ext = ntohs(tcp_hdr->port_dst);
 
             /* find nat mapping */            
             struct sr_nat_mapping *nat_mapping;
@@ -370,7 +370,7 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* translate ip destination address */
             ip_hdr->ip_dst = nat_mapping->ip_int;
             /* translate tcp destination port number */
-            tcp_hdr->port_dst = nat_mapping->aux_int;
+            tcp_hdr->port_dst = htons(nat_mapping->aux_int);
             /* recalculate tcp chechsum */
             /*
             bzero(&(tcp_hdr->tcp_sum), 2);
@@ -467,7 +467,7 @@ int sr_handle_ip_pkt(struct sr_instance* sr,
 
       /* If the packet comes from outside.*/
       if (ip_hdr->ip_dst == sr->nat->ip_ext){
-        nat_mapping = sr_nat_lookup_external(sr->nat, tcp_hdr->port_dst, nat_mapping_tcp, 
+        nat_mapping = sr_nat_lookup_external(sr->nat, ntohs(tcp_hdr->port_dst), nat_mapping_tcp, 
           ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 0);
       }
     }
@@ -906,12 +906,12 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
         /* Look for nat mapping for corresponding src_ip and src_aux. */
         struct sr_nat_mapping *nat_mapping;
         nat_mapping = sr_nat_lookup_internal(sr->nat, original_ip_src, 
-          original_tcp_src_port, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin, 1);
+          ntohs(original_tcp_src_port), nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin, 1);
   
         /* Create new mapping if existing mapping not found.*/
         if (!nat_mapping) {
           nat_mapping = sr_nat_insert_mapping(sr->nat, original_ip_src, 
-            original_tcp_src_port, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst);
+            ntohs(original_tcp_src_port), nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst);
         }
         
         struct sr_if* o_iface = sr_get_interface(sr, EXT_INTERFACE);
@@ -941,7 +941,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           ip_hdr->ip_sum = ip_cksum;
 
           /* update tcp header */          
-          tcp_hdr->port_src = nat_mapping->aux_ext;
+          tcp_hdr->port_src = htons(nat_mapping->aux_ext);
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
           /* create a pseudo tcp packet for computing tcp check sum */
@@ -985,13 +985,13 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
 
         /* Look for nat mapping for corresponding dst_ip and dst_aux. */
         struct sr_nat_mapping *nat_mapping;
-        nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, 
+        nat_mapping = sr_nat_lookup_external(sr->nat, ntohs(original_tcp_dst_port), 
           nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
         
         /* if no mapping, drop the packet */
         if (!nat_mapping) {
           sleep(6);
-          nat_mapping = sr_nat_lookup_external(sr->nat, original_tcp_dst_port, 
+          nat_mapping = sr_nat_lookup_external(sr->nat, ntohs(original_tcp_dst_port), 
             nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
           if (!nat_mapping){
             fprintf(stderr , "** Error: No nat mapping found for tcp comes from outside. \n");
@@ -1036,7 +1036,7 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
           ip_hdr->ip_sum = ip_cksum;
 
           /* update tcp header */          
-          tcp_hdr->port_dst = nat_mapping->aux_int;
+          tcp_hdr->port_dst = htons(nat_mapping->aux_int);
           /* recalculate tcp chechsum */
           bzero(&(tcp_hdr->tcp_sum), 2);
           /* create a pseudo tcp packet for computing tcp check sum */
