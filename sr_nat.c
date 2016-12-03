@@ -47,6 +47,7 @@ int sr_nat_destroy(struct sr_nat *nat) {  /* Destroys the nat (free memory) */
     free_memory(current);
     current = next;
   }
+  free(nat);
   pthread_kill(nat->thread, SIGKILL);
   return pthread_mutex_destroy(&(nat->lock)) && pthread_mutexattr_destroy(&(nat->attr));
 
@@ -60,25 +61,26 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
     pthread_mutex_lock(&(nat->lock));
     time_t curtime = time(NULL);
     /* handle periodic tasks here */
-    struct sr_nat_mapping* map; 
+    struct sr_nat_mapping* map = nat->mappings; 
     struct sr_nat_mapping* prev = NULL;
-    struct sr_nat_mapping* next = NULL;
-    for(map = nat->mappings; map != NULL; map = map->next){
+    struct sr_nat_mapping* next = map->next;
+    while (map){
       /* handle imcp timeout*/
       if( (map->type == nat_mapping_icmp) && 
         (difftime(curtime, map->last_updated) >= nat->icmp_query_timeout)){
         /* free mapping in the middle of linked list*/
         if(prev){
+          free_memory(map);
+          prev->next = next;
+          map = next;
           next = map->next;
-          prev->next = next;  
         }
         /* free top of the linked list*/
         else{
+          free_memory(map);
+          map = next;
           next = map->next;
-          nat->mappings = next; 
         }
-        free_memory(map);
-        break;
       }
 
       /* handle tcp timeout
@@ -98,11 +100,10 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
       */
 
       else{
-        pthread_mutex_unlock(&(nat->lock));
-        return NULL;
-
+        prev = map;
+        map = next;
+        next = map->next;
       }
-      prev = map;
     }
 
     pthread_mutex_unlock(&(nat->lock));
