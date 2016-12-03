@@ -329,12 +329,12 @@ void sr_handle_arp_reply(struct sr_instance* sr,
             /* find nat mapping */
             struct sr_nat_mapping *nat_mapping;
             nat_mapping = sr_nat_lookup_internal(sr->nat, ip_src_int, 
-              aux_src_int, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin, 0);
+              ntohs(aux_src_int), nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst, ack, syn, fin, 0);
 
             /* Create new mapping if existing mapping not found.*/
             if (!nat_mapping) {
               nat_mapping = sr_nat_insert_mapping(sr->nat, ip_src_int, 
-                   aux_src_int, nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst);
+                   ntohs(aux_src_int), nat_mapping_tcp, ip_hdr->ip_dst, tcp_hdr->port_dst);
             }
 
             /* translate ip source address */
