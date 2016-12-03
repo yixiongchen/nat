@@ -63,9 +63,9 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
     /* handle periodic tasks here */
     struct sr_nat_mapping* map = nat->mappings; 
     struct sr_nat_mapping* prev = NULL;
-    struct sr_nat_mapping* next = map->next;
     while (map){
       /* handle imcp timeout*/
+      struct sr_nat_mapping* next = map->next;
       if( (map->type == nat_mapping_icmp) && 
         (difftime(curtime, map->last_updated) >= nat->icmp_query_timeout)){
         /* free mapping in the middle of linked list*/
@@ -73,13 +73,11 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
           free_memory(map);
           prev->next = next;
           map = next;
-          next = map->next;
         }
         /* free top of the linked list*/
         else{
           free_memory(map);
           map = next;
-          next = map->next;
         }
       }
 
@@ -102,7 +100,6 @@ void *sr_nat_timeout(void *nat_ptr) {  /* Periodic Timout handling */
       else{
         prev = map;
         map = next;
-        next = map->next;
       }
     }
 
