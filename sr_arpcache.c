@@ -208,13 +208,19 @@ struct sr_arpreq *sr_arpcache_queuereq(struct sr_arpcache *cache,
     /* Add the packet to the list of packets for this request */
     if (packet && packet_len && iface) {
         struct sr_packet *new_pkt = (struct sr_packet *)malloc(sizeof(struct sr_packet));
-        
+        printf("23.1\n");
         new_pkt->buf = (uint8_t *)malloc(packet_len);
+        printf("23.2\n");
         memcpy(new_pkt->buf, packet, packet_len);
+        printf("23.3\n");
         new_pkt->len = packet_len;
+        printf("23.4\n");
 		new_pkt->iface = (char *)malloc(sr_IFACE_NAMELEN);
+        printf("23.5\n");
         strncpy(new_pkt->iface, iface, sr_IFACE_NAMELEN);
+        printf("23.6\n");
         new_pkt->next = req->packets;
+        printf("23.7\n");
         req->packets = new_pkt;
     }
     
