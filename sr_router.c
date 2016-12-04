@@ -652,7 +652,8 @@ void sr_icmp_dest_unreachable(struct sr_instance* sr,
   bzero(&(icmp_t3_hdr->unused), 2);
   bzero(&(icmp_t3_hdr->next_mtu), 2);
   memcpy(icmp_t3_hdr->data, packet + sizeof(struct sr_ethernet_hdr), ICMP_DATA_SIZE);
-  uint16_t icmp_cksum = cksum(icmp_t3_hdr, sizeof(struct sr_icmp_t3_hdr));
+  /* uint16_t icmp_cksum = cksum(icmp_t3_hdr, sizeof(struct sr_icmp_t3_hdr));*/
+  uint16_t icmp_cksum = cksum(icmp_t3_hdr, (int)ntohs(ip_hdr->ip_len)-((int)ip_hdr->ip_hl)*4);
   icmp_t3_hdr->icmp_sum = icmp_cksum;
 
   /* Drop packet if ip_src is me */
@@ -1022,12 +1023,15 @@ void sr_forward_ip_pkt(struct sr_instance* sr,
 
         /* if no mapping, drop the packet */
         if (!nat_mapping) {
+	  printf("Sleep for 6 seconds\n");
           sleep(6);
           nat_mapping = sr_nat_lookup_external(sr->nat, ntohs(original_tcp_dst_port), 
             nat_mapping_tcp, ip_hdr->ip_src, tcp_hdr->port_src, ack, syn, fin, 1);
           if (!nat_mapping){
+	    printf("original tcp dst port: %d\n", ntohs(original_tcp_dst_port));
             if (ntohs(original_tcp_dst_port) >= 1024){
               sr_icmp_dest_unreachable(sr, packet, len, interface, 3, 3);
+              return;
             }
             else{
               fprintf(stderr , "** Error: No nat mapping found for tcp comes from outside. \n");
